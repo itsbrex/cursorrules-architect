@@ -1,6 +1,7 @@
 import unittest
 
 from core.agents.anthropic import AnthropicArchitect
+from core.agents.anthropic import client as anthropic_client
 from tests.fakes.vendor_responses import AnthropicMessageCreateResponseFake, _AnthropicToolUseBlock
 
 
@@ -22,9 +23,11 @@ class _AnthropicFakeClient:
 
 class AnthropicArchitectParsingTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
-        import core.agents.anthropic as anth_mod
         self.fake_client = _AnthropicFakeClient()
-        anth_mod.anthropic_client = self.fake_client  # type: ignore
+        anthropic_client.set_client(self.fake_client)
+
+    async def asyncTearDown(self):  # noqa: D401 - cleanup helper
+        anthropic_client.set_client(None)
 
     async def test_parses_text_and_tool_use(self):
         arch = AnthropicArchitect()
@@ -33,4 +36,3 @@ class AnthropicArchitectParsingTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNotNone(res.get("tool_calls"))
         tc = res["tool_calls"][0]
         self.assertEqual(tc["name"], "web_search")
-

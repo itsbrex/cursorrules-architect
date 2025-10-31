@@ -1,8 +1,8 @@
 
 import pytest
 
-import core.agents.anthropic as anthropic_mod
 from core.agents.anthropic import AnthropicArchitect
+from core.agents.anthropic import client as anthropic_client
 
 
 class _BlockText:
@@ -47,10 +47,12 @@ async def test_anthropic_analyze_parses_text_and_tools(monkeypatch):
         _BlockTool("id1", "tavily_web_search", {"query": "x"}),
         _BlockText("analysis text"),
     ])
-    anthropic_mod.anthropic_client = _FakeClient(resp)
-
-    arch = AnthropicArchitect()
-    out = await arch.analyze({"formatted_prompt": "ctx"})
-    assert out["findings"] == "analysis text"
-    assert isinstance(out["tool_calls"], list)
-    assert out["tool_calls"][0]["name"] == "tavily_web_search"
+    anthropic_client.set_client(_FakeClient(resp))
+    try:
+        arch = AnthropicArchitect()
+        out = await arch.analyze({"formatted_prompt": "ctx"})
+        assert out["findings"] == "analysis text"
+        assert isinstance(out["tool_calls"], list)
+        assert out["tool_calls"][0]["name"] == "tavily_web_search"
+    finally:
+        anthropic_client.set_client(None)

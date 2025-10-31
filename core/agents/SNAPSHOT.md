@@ -1,6 +1,13 @@
 .
 ├── __init__.py                # Public entry point for the agents package, exposing factory method.
-├── anthropic.py               # Implements the architect for Anthropic's Claude models.
+├── anthropic/                 # Contains all logic for interacting with Anthropic's Claude models.
+│   ├── __init__.py            # Public entry point for the Anthropic sub-package.
+│   ├── architect.py           # Implements the BaseArchitect for Anthropic models.
+│   ├── client.py              # Lazy Anthropic SDK client helpers.
+│   ├── prompting.py           # Prompt templates and formatters for Claude agents.
+│   ├── request_builder.py     # Constructs Claude Messages API payloads.
+│   ├── response_parser.py     # Normalizes Anthropic responses into findings/tool calls.
+│   └── tooling.py             # Provider-specific tool configuration helpers.
 ├── base.py                    # Defines the abstract BaseArchitect class and common enums.
 ├── deepseek.py                # Implements the architect for DeepSeek models via OpenAI-compatible API.
 ├── factory/                   # Contains the logic for creating different architect instances.
