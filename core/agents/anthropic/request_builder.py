@@ -37,7 +37,7 @@ def prepare_request(
     }
 
     thinking = _build_thinking_payload(reasoning)
-    if thinking:
+    if thinking is not None:
         payload["thinking"] = thinking
 
     if tools:
@@ -51,9 +51,10 @@ def _build_thinking_payload(reasoning: ReasoningMode) -> dict[str, Any] | None:
         return {"type": "enabled", "budget_tokens": DEFAULT_THINKING_BUDGET}
 
     if reasoning == ReasoningMode.DYNAMIC:
+        # Dynamic mode allows the caller to opt-in to Anthropic's adaptive thinking.
         return {"type": "dynamic"}
 
     if reasoning == ReasoningMode.DISABLED:
-        return {"type": "disabled"}
+        return None
 
     return None

@@ -12,6 +12,10 @@ from typing import TypedDict
 from core.agents.base import ModelProvider
 from core.types.models import (
     CLAUDE_BASIC,
+    CLAUDE_HAIKU,
+    CLAUDE_HAIKU_WITH_REASONING,
+    CLAUDE_OPUS,
+    CLAUDE_OPUS_WITH_REASONING,
     CLAUDE_WITH_REASONING,
     DEEPSEEK_CHAT,
     DEEPSEEK_REASONER,
@@ -21,8 +25,8 @@ from core.types.models import (
     GPT4_1_DEFAULT,
     GPT4_1_PRECISE,
     GPT5_DEFAULT,
-    GPT5_MINIMAL,
     GPT5_HIGH,
+    GPT5_MINIMAL,
     O3_HIGH,
     O3_LOW,
     O3_MEDIUM,
@@ -76,14 +80,38 @@ MODEL_PRESETS: dict[str, PresetDefinition] = {
     ),
     "claude-sonnet": _preset(
         config=CLAUDE_BASIC,
-        label="Claude Sonnet 4",
-        description="Balanced quality and speed for general analysis.",
+        label="Claude Sonnet 4.5",
+        description="Balanced Claude 4.5 release for default analysis work.",
         provider=ModelProvider.ANTHROPIC,
     ),
     "claude-sonnet-reasoning": _preset(
         config=CLAUDE_WITH_REASONING,
-        label="Claude Sonnet 4 (Reasoning)",
-        description="Enhanced reasoning mode for complex investigations.",
+        label="Claude Sonnet 4.5 (Thinking)",
+        description="Enables extended thinking for deeper investigations.",
+        provider=ModelProvider.ANTHROPIC,
+    ),
+    "claude-haiku": _preset(
+        config=CLAUDE_HAIKU,
+        label="Claude Haiku 4.5",
+        description="Latency-optimized Claude 4.5 tier for rapid iteration.",
+        provider=ModelProvider.ANTHROPIC,
+    ),
+    "claude-haiku-reasoning": _preset(
+        config=CLAUDE_HAIKU_WITH_REASONING,
+        label="Claude Haiku 4.5 (Thinking)",
+        description="Fast model with extended thinking enabled.",
+        provider=ModelProvider.ANTHROPIC,
+    ),
+    "claude-opus": _preset(
+        config=CLAUDE_OPUS,
+        label="Claude Opus 4.1",
+        description="Premium Claude tier prioritizing accuracy over latency.",
+        provider=ModelProvider.ANTHROPIC,
+    ),
+    "claude-opus-reasoning": _preset(
+        config=CLAUDE_OPUS_WITH_REASONING,
+        label="Claude Opus 4.1 (Thinking)",
+        description="Most capable Claude model with extended thinking.",
         provider=ModelProvider.ANTHROPIC,
     ),
     "o3-low": _preset(

@@ -60,12 +60,17 @@ class _AnthropicToolUse:
 
 class _AnthropicTextBlock:
     def __init__(self, text: str) -> None:
+        self.type = "text"
         self.text = text
 
 
 class _AnthropicToolUseBlock:
     def __init__(self, tool_id: str, name: str, input_data: Any) -> None:
         # Anthropic SDK exposes a `tool_use` content block, we emulate it
+        self.type = "tool_use"
+        self.id = tool_id
+        self.name = name
+        self.input = input_data
         self.tool_use = _AnthropicToolUse(tool_id, name, input_data)
 
 
@@ -115,4 +120,3 @@ class GeminiGenerateContentResponseFake:
         if function_call:
             parts.append(_PartFake(function_call=function_call))
         self.candidates = [_CandidateFake(parts)]
-

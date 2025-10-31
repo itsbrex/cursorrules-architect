@@ -47,8 +47,20 @@ def _extract_text(block: Any) -> str | None:
 
 def _extract_tool_use(block: Any) -> dict[str, Any] | None:
     if isinstance(block, dict):
+        if block.get("type") == "tool_use":
+            return {
+                "id": block.get("id"),
+                "name": block.get("name"),
+                "input": block.get("input"),
+            }
         tool_use = block.get("tool_use")
     else:
+        if getattr(block, "type", None) == "tool_use":
+            return {
+                "id": getattr(block, "id", None),
+                "name": getattr(block, "name", None),
+                "input": getattr(block, "input", None),
+            }
         tool_use = getattr(block, "tool_use", None)
 
     if not tool_use:

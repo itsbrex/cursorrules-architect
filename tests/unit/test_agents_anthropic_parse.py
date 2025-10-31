@@ -56,3 +56,31 @@ async def test_anthropic_analyze_parses_text_and_tools(monkeypatch):
         assert out["tool_calls"][0]["name"] == "tavily_web_search"
     finally:
         anthropic_client.set_client(None)
+
+
+@pytest.mark.asyncio
+async def test_anthropic_analyze_parses_dict_tool_use(monkeypatch):
+    resp = _FakeResponse([
+        {"type": "thinking", "thinking": "inspecting"},
+        {
+            "type": "tool_use",
+            "id": "toolu_123",
+            "name": "tavily_web_search",
+            "input": {"query": "framework"},
+        },
+        {"type": "text", "text": "final analysis"},
+    ])
+    anthropic_client.set_client(_FakeClient(resp))
+    try:
+        arch = AnthropicArchitect()
+        out = await arch.analyze({"formatted_prompt": "ctx"})
+        assert out["findings"] == "final analysis"
+        assert out["tool_calls"] == [
+            {
+                "id": "toolu_123",
+                "name": "tavily_web_search",
+                "input": {"query": "framework"},
+            }
+        ]
+    finally:
+        anthropic_client.set_client(None)

@@ -21,7 +21,7 @@ class AnthropicArchitect(BaseArchitect):
 
     def __init__(
         self,
-        model_name: str = "claude-3-7-sonnet-20250219",
+        model_name: str = "claude-sonnet-4-5",
         reasoning: ReasoningMode = ReasoningMode.DISABLED,
         name: str | None = None,
         role: str | None = None,

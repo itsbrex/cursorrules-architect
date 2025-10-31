@@ -31,14 +31,42 @@ class ModelConfig(NamedTuple):
 
 CLAUDE_BASIC = ModelConfig(
     provider=ModelProvider.ANTHROPIC,
-    model_name="claude-sonnet-4-20250514",
+    model_name="claude-sonnet-4-5",
     reasoning=ReasoningMode.DISABLED,
     tools_config={"enabled": False, "tools": None}
 )
 
 CLAUDE_WITH_REASONING = ModelConfig(
     provider=ModelProvider.ANTHROPIC,
-    model_name="claude-sonnet-4-20250514",
+    model_name="claude-sonnet-4-5",
+    reasoning=ReasoningMode.ENABLED,
+    tools_config={"enabled": False, "tools": None}
+)
+
+CLAUDE_HAIKU = ModelConfig(
+    provider=ModelProvider.ANTHROPIC,
+    model_name="claude-haiku-4-5",
+    reasoning=ReasoningMode.DISABLED,
+    tools_config={"enabled": False, "tools": None}
+)
+
+CLAUDE_HAIKU_WITH_REASONING = ModelConfig(
+    provider=ModelProvider.ANTHROPIC,
+    model_name="claude-haiku-4-5",
+    reasoning=ReasoningMode.ENABLED,
+    tools_config={"enabled": False, "tools": None}
+)
+
+CLAUDE_OPUS = ModelConfig(
+    provider=ModelProvider.ANTHROPIC,
+    model_name="claude-opus-4-1",
+    reasoning=ReasoningMode.DISABLED,
+    tools_config={"enabled": False, "tools": None}
+)
+
+CLAUDE_OPUS_WITH_REASONING = ModelConfig(
+    provider=ModelProvider.ANTHROPIC,
+    model_name="claude-opus-4-1",
     reasoning=ReasoningMode.ENABLED,
     tools_config={"enabled": False, "tools": None}
 )
@@ -56,7 +84,7 @@ def create_researcher_config(provider: ModelProvider, model_name: str) -> ModelC
 
     Args:
         provider: The model provider (e.g., ModelProvider.ANTHROPIC).
-        model_name: The specific model name (e.g., "claude-sonnet-4-20250514").
+        model_name: The specific model name (e.g., "claude-sonnet-4-5").
 
     Returns:
         A ModelConfig instance configured for research.

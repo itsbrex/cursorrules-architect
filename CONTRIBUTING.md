@@ -38,7 +38,7 @@ To get started with development, you'll need to set up your local environment.
 - Python 3.8 or higher
 - API keys for at least one of the following providers:
   - OpenAI API key with access to `o3`, `o4-mini`, or `gpt-4.1`
-  - Anthropic API key with access to `claude-3-7-sonnet-20250219` 
+  - Anthropic API key with access to at least one Claude 4 model (e.g., `claude-sonnet-4-5`, `claude-haiku-4-5`, or `claude-opus-4-1`)
   - DeepSeek API key with access to DeepSeek Reasoner
 - Git
 
@@ -202,7 +202,9 @@ python -m unittest discover tests
 CursorRules Architect V2 supports multiple AI models:
 
 - **Anthropic**:
-  - `claude-3-7-sonnet-20250219` (with or without reasoning)
+  - `claude-haiku-4-5` (with or without thinking)
+  - `claude-sonnet-4-5` (with or without thinking)
+  - `claude-opus-4-1` (with or without thinking)
 
 - **OpenAI**:
   - `o3` (with low/medium/high reasoning)
@@ -233,5 +235,4 @@ Be mindful of API usage costs when developing and testing. Consider using mock r
 If you have any questions or need assistance, feel free to open an issue or reach out to the maintainers.
 
 We look forward to your contributions!
-
 

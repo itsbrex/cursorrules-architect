@@ -4,7 +4,7 @@
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
 [![OpenAI](https://img.shields.io/badge/OpenAI-o3%20%7C%20o3--mini%20%7C%20gpt--4o-blue.svg)](https://openai.com/)
-[![Anthropic](https://img.shields.io/badge/Anthropic-claude--3.7--sonnet-purple.svg)](https://www.anthropic.com/)
+[![Anthropic](https://img.shields.io/badge/Anthropic-claude--4.5%20family-purple.svg)](https://www.anthropic.com/)
 [![DeepSeek](https://img.shields.io/badge/DeepSeek-deepseek--reasoner-red.svg)](https://deepseek.com/)
 [![Google](https://img.shields.io/badge/Google-gemini--2.0--flash%20%7C%20gemini--2.5--pro-green.svg)](https://ai.google.dev/)
 [![Built By](https://img.shields.io/badge/Built%20By-SlyyCooper-orange.svg)](https://github.com/SlyyCooper)
@@ -37,7 +37,7 @@ CursorRules Architect V2 is an advanced multi-agent system that analyzes your co
 
 - Python 3.8+
 - API keys for at least one of the supported providers:
-  - Anthropic API key with access to `claude-3-7-sonnet-20250219`
+  - Anthropic API key with access to a Claude 4 model (e.g., `claude-haiku-4-5`, `claude-sonnet-4-5`, or `claude-opus-4-1`)
   - OpenAI API key with access to `o3`, `o4-mini`, or `gpt-4.1`
   - DeepSeek API key with access to DeepSeek Reasoner
   - Google API key with access to `gemini-2.0-flash` or `gemini-2.5-pro-exp-03-25`
@@ -198,24 +198,36 @@ The system defines several predefined model configurations you can use:
 # Anthropic Configurations
 CLAUDE_BASIC = ModelConfig(
     provider=ModelProvider.ANTHROPIC,
-    model_name="claude-3-7-sonnet-20250219",
+    model_name="claude-sonnet-4-5",
     reasoning=ReasoningMode.DISABLED
 )
 
 CLAUDE_WITH_REASONING = ModelConfig(
     provider=ModelProvider.ANTHROPIC,
-    model_name="claude-3-7-sonnet-20250219",
+    model_name="claude-sonnet-4-5",
     reasoning=ReasoningMode.ENABLED
 )
 
+CLAUDE_HAIKU = ModelConfig(
+    provider=ModelProvider.ANTHROPIC,
+    model_name="claude-haiku-4-5",
+    reasoning=ReasoningMode.DISABLED
+)
+
+CLAUDE_OPUS = ModelConfig(
+    provider=ModelProvider.ANTHROPIC,
+    model_name="claude-opus-4-1",
+    reasoning=ReasoningMode.DISABLED
+)
+
 # OpenAI Configurations
-O1_HIGH = ModelConfig(
+O3_HIGH = ModelConfig(
     provider=ModelProvider.OPENAI,
     model_name="o3",
     reasoning=ReasoningMode.HIGH
 )
 
-O3_MINI_MEDIUM = ModelConfig(
+O4_MINI_MEDIUM = ModelConfig(
     provider=ModelProvider.OPENAI,
     model_name="o4-mini",
     reasoning=ReasoningMode.MEDIUM
