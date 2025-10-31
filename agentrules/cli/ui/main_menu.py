@@ -3,48 +3,66 @@
 from __future__ import annotations
 
 from pathlib import Path
+from textwrap import dedent
 
 import questionary
-from rich.panel import Panel
-from rich.text import Text
 
 from ..context import CliContext
 from ..services.pipeline_runner import run_pipeline
 from . import config_wizard
+from .styles import CLI_STYLE, navigation_choice
 
 
 def run_main_menu(context: CliContext) -> None:
     console = context.console
-    title = Text("agentrules", justify="center", style="bold cyan")
-    console.print(Panel(title, border_style="cyan", padding=(1, 4)))
+    banner = dedent(
+        """
+        [bold cyan]
+         █████╗  ██████╗ ███████╗███╗   ██╗████████╗██████╗ ██╗   ██╗██╗     ███████╗███████╗
+        ██╔══██╗██╔════╝ ██╔════╝████╗  ██║╚══██╔══╝██╔══██╗██║   ██║██║     ██╔════╝██╔════╝
+        ███████║██║  ███╗█████╗  ██╔██╗ ██║   ██║   ██████╔╝██║   ██║██║     █████╗  ███████╗
+        ██╔══██║██║   ██║██╔══╝  ██║╚██╗██║   ██║   ██╔══██╗██║   ██║██║     ██╔══╝  ╚════██║
+        ██║  ██║╚██████╔╝███████╗██║ ╚████║   ██║   ██║  ██║╚██████╔╝███████╗███████╗███████║
+        ╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═╝  ╚═══╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚══════╝╚══════╝
+        [/bold cyan]
+        """
+    )
+    console.print(banner)
     console.print("[dim]Analyze projects, manage providers, and tune model presets.[/dim]\n")
 
-    menu_choices = {
-        "Analyze current directory": "analyze_current",
-        "Analyze another path": "analyze_other",
-        "Configure provider API keys": "configure_keys",
-        "Configure models per phase": "configure_models",
-        "Adjust logging verbosity": "configure_logging",
-        "Show configured providers": "show_keys",
-        "Exit": "exit",
-    }
+    menu_options = [
+        ("Analyze current directory", "analyze_current"),
+        ("Analyze another path", "analyze_other"),
+        ("Settings", "settings"),
+    ]
 
     while True:
+        choices = [
+            questionary.Choice(title=label, value=value)
+            for label, value in menu_options
+        ]
+        choices.append(navigation_choice("Exit", value="exit"))
+
         choice = questionary.select(
             "What would you like to do?",
-            choices=list(menu_choices.keys()),
+            choices=choices,
             qmark="🤖",
+            style=CLI_STYLE,
         ).ask()
 
-        if choice is None or menu_choices[choice] == "exit":
+        if choice in (None, "exit"):
             console.print("Goodbye!")
             return
 
-        action = menu_choices[choice]
+        action = choice
         if action == "analyze_current":
             run_pipeline(Path.cwd(), offline=False, context=context)
         elif action == "analyze_other":
-            path_answer = questionary.path("Target project directory:", only_directories=True).ask()
+            path_answer = questionary.path(
+                "Target project directory:",
+                only_directories=True,
+                style=CLI_STYLE,
+            ).ask()
             if not path_answer:
                 continue
             target = Path(path_answer.strip()).expanduser().resolve()
@@ -52,11 +70,5 @@ def run_main_menu(context: CliContext) -> None:
                 console.print(f"[red]Invalid directory: {target}[/]")
                 continue
             run_pipeline(target, offline=False, context=context)
-        elif action == "configure_keys":
-            config_wizard.configure_provider_keys(context)
-        elif action == "configure_models":
-            config_wizard.configure_models(context)
-        elif action == "configure_logging":
-            config_wizard.configure_logging(context)
-        elif action == "show_keys":
-            config_wizard.show_provider_summary(context)
+        elif action == "settings":
+            config_wizard.configure_settings(context)

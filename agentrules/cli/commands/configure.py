@@ -33,6 +33,11 @@ def register(app: typer.Typer) -> None:
             "--logging",
             help="Configure logging verbosity.",
         ),
+        outputs_only: bool = typer.Option(
+            False,
+            "--outputs",
+            help="Configure output generation preferences.",
+        ),
     ) -> None:
         context = bootstrap_runtime()
 
@@ -42,11 +47,12 @@ def register(app: typer.Typer) -> None:
                 provider is not None,
                 models_only,
                 logging_only,
+                outputs_only,
             )
             if flag
         )
         if option_count > 1:
-            raise typer.BadParameter("Choose only one of --provider, --models, or --logging.")
+            raise typer.BadParameter("Choose only one of --provider, --models, --logging, or --outputs.")
 
         if models_only:
             config_wizard.configure_models(context)
@@ -54,6 +60,10 @@ def register(app: typer.Typer) -> None:
 
         if logging_only:
             config_wizard.configure_logging(context)
+            return
+
+        if outputs_only:
+            config_wizard.configure_output_preferences(context)
             return
 
         if provider:
@@ -72,4 +82,4 @@ def register(app: typer.Typer) -> None:
             context.console.print(f"[green]{provider.title()} key updated.[/]")
             return
 
-        config_wizard.configure_provider_keys(context)
+        config_wizard.configure_settings(context)

@@ -12,6 +12,14 @@ from agentrules import model_config
 
 from ..context import CliContext, format_secret_status, mask_secret
 from ..services import configuration
+from .styles import (
+    CLI_STYLE,
+    model_display_choice,
+    model_variant_choice,
+    navigation_choice,
+    toggle_choice,
+    value_choice,
+)
 
 
 def _render_provider_table(context: CliContext, states: list[configuration.ProviderState]) -> None:
@@ -39,6 +47,40 @@ def show_provider_summary(context: CliContext) -> None:
     _render_provider_table(context, states)
 
 
+def configure_settings(context: CliContext) -> None:
+    console = context.console
+    console.print("\n[bold]Settings[/bold]")
+
+    while True:
+        selection = questionary.select(
+            "Select a settings category:",
+            choices=[
+                questionary.Choice(title="Provider API keys", value="providers"),
+                questionary.Choice(title="Model presets per phase", value="models"),
+                questionary.Choice(title="Logging verbosity", value="logging"),
+                questionary.Choice(title="Output preferences", value="outputs"),
+                questionary.Choice(title="Exclusion rules", value="exclusions"),
+                navigation_choice("Back", value="__BACK__"),
+            ],
+            qmark="⚙️",
+            style=CLI_STYLE,
+        ).ask()
+
+        if selection in (None, "__BACK__"):
+            console.print("[dim]Leaving settings.[/]")
+            return
+        if selection == "providers":
+            configure_provider_keys(context)
+        elif selection == "models":
+            configure_models(context)
+        elif selection == "logging":
+            configure_logging(context)
+        elif selection == "outputs":
+            configure_output_preferences(context)
+        elif selection == "exclusions":
+            configure_exclusions(context)
+
+
 def configure_provider_keys(context: CliContext) -> None:
     console = context.console
     console.print("\n[bold]Configure Provider API Keys[/bold]")
@@ -53,12 +95,13 @@ def configure_provider_keys(context: CliContext) -> None:
             questionary.Choice(title=state.name.title(), value=state.name)
             for state in states
         ]
-        choices.append(questionary.Choice(title="Done", value="__DONE__"))
+        choices.append(navigation_choice("Done", value="__DONE__"))
 
         selection = questionary.select(
             "Select provider to configure:",
             choices=choices,
             qmark="🔐",
+            style=CLI_STYLE,
         ).ask()
 
         if selection is None:
@@ -77,6 +120,7 @@ def configure_provider_keys(context: CliContext) -> None:
             f"Enter {state.name.title()} API key [{current_display}]",
             qmark="🔐",
             default="",
+            style=CLI_STYLE,
         ).ask()
 
         if answer is None:
@@ -113,21 +157,22 @@ def configure_logging(context: CliContext) -> None:
         )
 
     choices = [
-        questionary.Choice(title="Quiet – only warnings and errors (default)", value="quiet"),
-        questionary.Choice(title="Standard – progress updates", value="standard"),
+        questionary.Choice(title="Quiet – only warnings and errors", value="quiet"),
+        questionary.Choice(title="Standard – progress updates (default)", value="standard"),
         questionary.Choice(title="Verbose – include debug diagnostics", value="verbose"),
-        questionary.Choice(title="Reset to default", value="__RESET__"),
-        questionary.Choice(title="Cancel", value="__CANCEL__"),
+        navigation_choice("Reset to default", value="__RESET__"),
+        navigation_choice("Cancel", value="__CANCEL__"),
     ]
 
-    current = configuration.get_logging_preference() or "quiet"
-    default_choice = current if current in {"quiet", "standard", "verbose"} else "quiet"
+    current = configuration.get_logging_preference() or "standard"
+    default_choice = current if current in {"quiet", "standard", "verbose"} else "standard"
 
     selection = questionary.select(
         "Select logging verbosity:",
         choices=choices,
         default=default_choice,
         qmark="🪵",
+        style=CLI_STYLE,
     ).ask()
 
     if selection in (None, "__CANCEL__"):
@@ -135,7 +180,7 @@ def configure_logging(context: CliContext) -> None:
         return
     if selection == "__RESET__":
         configuration.save_logging_preference(None)
-        console.print("[green]Logging verbosity reset to default (quiet).[/]")
+        console.print("[green]Logging verbosity reset to default (standard).[/]")
         return
 
     configuration.save_logging_preference(selection)
@@ -145,6 +190,252 @@ def configure_logging(context: CliContext) -> None:
         console.print("[green]Logging set to verbose. Debug output will be shown.[/]")
     else:
         console.print("[green]Logging set to standard verbosity.[/]")
+
+
+def configure_output_preferences(context: CliContext) -> None:
+    console = context.console
+    console.print("\n[bold]Configure output preferences[/bold]")
+    console.print("[dim]Toggle generated artifacts after each analysis run.[/dim]\n")
+
+    while True:
+        preferences = configuration.get_output_preferences()
+        rules_filename = configuration.get_rules_file_name()
+        selection = questionary.select(
+            "Select preference to toggle:",
+            choices=[
+                toggle_choice(
+                    "Generate .cursorignore after analysis",
+                    preferences.generate_cursorignore,
+                    value="__TOGGLE_CURSORIGNORE__",
+                ),
+                toggle_choice(
+                    "Write per-phase reports to phases_output/",
+                    preferences.generate_phase_outputs,
+                    value="__TOGGLE_PHASE_OUTPUTS__",
+                ),
+                value_choice(
+                    "Rules file name",
+                    rules_filename,
+                    value="__EDIT_RULES_FILENAME__",
+                ),
+                navigation_choice("Back", value="__BACK__"),
+            ],
+            qmark="🗂️",
+            style=CLI_STYLE,
+        ).ask()
+
+        if selection in (None, "__BACK__"):
+            console.print("[dim]Leaving output preferences.[/]")
+            return
+
+        if selection == "__TOGGLE_CURSORIGNORE__":
+            new_value = not preferences.generate_cursorignore
+            configuration.save_generate_cursorignore_preference(new_value)
+            status = "enabled" if new_value else "disabled"
+            console.print(f"[green].cursorignore generation {status}.[/]")
+        elif selection == "__TOGGLE_PHASE_OUTPUTS__":
+            new_value = not preferences.generate_phase_outputs
+            configuration.save_generate_phase_outputs_preference(new_value)
+            if new_value:
+                console.print("[green]Will write per-phase reports and metrics to phases_output/.[/]")
+            else:
+                console.print("[yellow]Per-phase reports and metrics will be skipped.[/]")
+        elif selection == "__EDIT_RULES_FILENAME__":
+            answer = questionary.text(
+                "Enter rules file name (stored in project root):",
+                default=rules_filename,
+                qmark="🗂️",
+                style=CLI_STYLE,
+                validate=lambda text: bool(text.strip()) and "/" not in text and "\\" not in text,
+            ).ask()
+
+            if not answer:
+                console.print("[yellow]No changes made to rules file name.[/]")
+                continue
+
+            trimmed = answer.strip()
+            configuration.save_rules_file_name(trimmed)
+            console.print(f"[green]Rules file will now be written to {trimmed}.[/]")
+
+
+def _render_exclusion_summary(context: CliContext) -> dict:
+    data = configuration.get_exclusion_settings()
+    overrides = data["overrides"]
+    effective = data["effective"]
+
+    console = context.console
+    console.print("\n[bold]Current exclusion rules[/bold]")
+
+    table = Table(show_header=True, header_style="bold cyan", pad_edge=False)
+    table.add_column("Directories", overflow="fold")
+    table.add_column("Files", overflow="fold")
+    table.add_column("Extensions", overflow="fold")
+
+    def _format_value(kind: str, value: str) -> str:
+        additions = getattr(overrides, f"add_{kind}")
+        if value in additions:
+            return f"[green]{value}[/]"
+        return f"[dim]{value}[/]"
+
+    columns = {
+        "directories": [_format_value("directories", v) for v in effective["directories"]],
+        "files": [_format_value("files", v) for v in effective["files"]],
+        "extensions": [_format_value("extensions", v) for v in effective["extensions"]],
+    }
+
+    max_len = max((len(values) for values in columns.values()), default=0)
+    if max_len == 0:
+        table.add_row("[dim]None[/]", "[dim]None[/]", "[dim]None[/]")
+    else:
+        keys = ("directories", "files", "extensions")
+        for idx in range(max_len):
+            row = [columns[key][idx] if idx < len(columns[key]) else "" for key in keys]
+            table.add_row(*row)
+
+    console.print(table)
+
+    added_summary: list[str] = []
+    removed_summary: list[str] = []
+
+    if overrides.add_directories or overrides.add_files or overrides.add_extensions:
+        if overrides.add_directories:
+            added_summary.append(f"directories (+ {len(overrides.add_directories)})")
+        if overrides.add_files:
+            added_summary.append(f"files (+ {len(overrides.add_files)})")
+        if overrides.add_extensions:
+            added_summary.append(f"extensions (+ {len(overrides.add_extensions)})")
+    if overrides.remove_directories or overrides.remove_files or overrides.remove_extensions:
+        if overrides.remove_directories:
+            removed_summary.append(f"directories (− {len(overrides.remove_directories)})")
+        if overrides.remove_files:
+            removed_summary.append(f"files (− {len(overrides.remove_files)})")
+        if overrides.remove_extensions:
+            removed_summary.append(f"extensions (− {len(overrides.remove_extensions)})")
+
+    if added_summary:
+        console.print(f"[green]Custom additions:[/] {', '.join(added_summary)}")
+    if removed_summary:
+        console.print(f"[red]Removed defaults:[/] {', '.join(removed_summary)}")
+
+    return data
+
+
+def _prompt_exclusion_value(kind: str, default: str | None = None) -> str | None:
+    label_map = {
+        "directories": "Directory name",
+        "files": "Filename",
+        "extensions": "Extension (with or without dot)",
+    }
+    qmark_map = {
+        "directories": "📁",
+        "files": "📄",
+        "extensions": "🔣",
+    }
+
+    question = label_map.get(kind, "Value")
+    qmark = qmark_map.get(kind, "?")
+
+    def _validate(text: str) -> bool:
+        stripped = text.strip()
+        if not stripped:
+            return False
+        if kind == "directories" and ("/" in stripped or "\\" in stripped):
+            return False
+        if kind == "extensions" and ("/" in stripped or "\\" in stripped or " " in stripped):
+            return False
+        return True
+
+    answer = questionary.text(
+        question + ":",
+        default=default or "",
+        qmark=qmark,
+        style=CLI_STYLE,
+        validate=lambda text: _validate(text) or f"Enter a valid {question.lower()}",
+    ).ask()
+
+    return answer.strip() if answer else None
+
+
+def configure_exclusions(context: CliContext) -> None:
+    console = context.console
+    console.print("\n[bold]Configure exclusion rules[/bold]")
+    console.print(
+        "Adjust which files and directories are sent to the agents. Defaults stay intact unless overridden.\n"
+    )
+
+    while True:
+        _render_exclusion_summary(context)
+
+        category = questionary.select(
+            "Choose exclusion category:",
+            choices=[
+                questionary.Choice(title="Directories", value="directories"),
+                questionary.Choice(title="Files", value="files"),
+                questionary.Choice(title="Extensions", value="extensions"),
+                navigation_choice("Reset to defaults", value="__RESET__"),
+                navigation_choice("Back", value="__BACK__"),
+            ],
+            qmark="🚫",
+            style=CLI_STYLE,
+        ).ask()
+
+        if category in (None, "__BACK__"):
+            console.print("[dim]Leaving exclusion settings.[/]")
+            return
+
+        if category == "__RESET__":
+            configuration.reset_custom_exclusions()
+            console.print("[green]Exclusions reset to defaults.[/]")
+            continue
+
+        action = questionary.select(
+            f"Modify {category}:",
+            choices=[
+                questionary.Choice(title="Add", value="add"),
+                questionary.Choice(title="Remove", value="remove"),
+                navigation_choice("Cancel", value="__CANCEL__"),
+            ],
+            qmark="➕" if category != "extensions" else "🔣",
+            style=CLI_STYLE,
+        ).ask()
+
+        if action in (None, "__CANCEL__"):
+            console.print("[yellow]No changes made.[/]")
+            continue
+
+        value = _prompt_exclusion_value(category)
+        if not value:
+            console.print("[yellow]No changes made.[/]")
+            continue
+
+        effective_key = {
+            "directories": "directories",
+            "files": "files",
+            "extensions": "extensions",
+        }[category]
+
+        if action == "add":
+            normalized = configuration.add_custom_exclusion(category, value)
+            if not normalized:
+                console.print("[yellow]Value was not added. Ensure it is formatted correctly.[/]")
+                continue
+            latest = configuration.get_exclusion_settings()
+            effective_values = latest["effective"][effective_key]
+            if normalized in effective_values:
+                console.print(f"[green]'{normalized}' will be excluded from analysis.[/]")
+            else:
+                console.print(f"[yellow]No change detected for '{normalized}'.[/]")
+        elif action == "remove":
+            normalized = configuration.remove_custom_exclusion(category, value)
+            if not normalized:
+                console.print("[yellow]Value was not updated. Ensure it is formatted correctly.[/]")
+                continue
+            latest = configuration.get_exclusion_settings()
+            effective_values = latest["effective"][effective_key]
+            if normalized in effective_values:
+                console.print(f"[yellow]'{normalized}' remains excluded (already default).[/]")
+            else:
+                console.print(f"[green]'{normalized}' will no longer be excluded.[/]")
 
 
 def configure_models(context: CliContext) -> None:
@@ -169,11 +460,11 @@ def configure_models(context: CliContext) -> None:
             return "Default"
         return variant_label[0].upper() + variant_label[1:]
 
-    def _current_display(key: str | None) -> str:
+    def _current_labels(key: str | None) -> tuple[str, str]:
         info = model_config.get_preset_info(key) if key else None
         if not info:
-            return "Not configured"
-        return f"{info.label} [{info.provider_display}]"
+            return "Not configured", ""
+        return info.label, info.provider_display
 
     while True:
         phase_choices: list[questionary.Choice | questionary.Separator] = []
@@ -188,20 +479,24 @@ def configure_models(context: CliContext) -> None:
                 phase_choices.append(questionary.Separator(header_title))
 
                 general_key = active.get("phase1", model_config.get_default_preset_key("phase1"))
-                general_label = _current_display(general_key)
+                general_model, general_provider = _current_labels(general_key)
                 phase_choices.append(
-                    questionary.Choice(
-                        title=f"├─ General Agents [{general_label}]",
+                    model_display_choice(
+                        "├─ General Agents",
+                        general_model,
+                        general_provider,
                         value="phase1",
                     )
                 )
 
                 researcher_key = active.get("researcher", model_config.get_default_preset_key("researcher"))
-                researcher_label = _current_display(researcher_key)
+                researcher_model, researcher_provider = _current_labels(researcher_key)
                 researcher_title = model_config.get_phase_title("researcher")
                 phase_choices.append(
-                    questionary.Choice(
-                        title=f"└─ {researcher_title} [{researcher_label}]",
+                    model_display_choice(
+                        f"└─ {researcher_title}",
+                        researcher_model,
+                        researcher_provider,
                         value="researcher",
                     )
                 )
@@ -211,16 +506,19 @@ def configure_models(context: CliContext) -> None:
 
             title = model_config.get_phase_title(phase)
             current_key = active.get(phase, model_config.get_default_preset_key(phase))
-            display_label = _current_display(current_key)
-            phase_choices.append(questionary.Choice(title=f"{title} [{display_label}]", value=phase))
+            model_label, provider_label = _current_labels(current_key)
+            phase_choices.append(
+                model_display_choice(title, model_label, provider_label, value=phase)
+            )
             handled_phases.add(phase)
 
-        phase_choices.append(questionary.Choice(title="Done", value="__DONE__"))
+        phase_choices.append(navigation_choice("Done", value="__DONE__"))
 
         phase_selection = questionary.select(
             "Select phase to configure:",
             choices=phase_choices,
             qmark="🧠",
+            style=CLI_STYLE,
         ).ask()
 
         if phase_selection is None:
@@ -282,17 +580,31 @@ def configure_models(context: CliContext) -> None:
                     title_label += " (default)"
                 if variant["preset_key"] == current_key:
                     title_label += " [current]"
-                model_choices.append(questionary.Choice(title=title_label, value=variant["preset_key"]))
+                model_choices.append(
+                    model_display_choice(
+                        title_label,
+                        variant["preset"].label,
+                        variant["preset"].provider_display,
+                        value=variant["preset_key"],
+                    )
+                )
             else:
                 current_variant = next((v for v in variants if v["preset_key"] == current_key), None)
                 default_variant = next((v for v in variants if v["preset_key"] == default_key), None)
-                summary = f"{entry['base_label']} [{entry['provider_display']}] – {len(variants)} options"
+                summary = f"{entry['base_label']} — {len(variants)} options"
                 if current_variant:
                     summary += f" (current: {current_variant['variant_display']})"
                 elif default_variant:
                     summary += f" (default: {default_variant['variant_display']})"
                 group_value = f"__GROUP__{idx}"
-                model_choices.append(questionary.Choice(title=summary, value=group_value))
+                model_choices.append(
+                    model_display_choice(
+                        summary,
+                        entry["base_label"],
+                        entry["provider_display"],
+                        value=group_value,
+                    )
+                )
                 group_selection_map[group_value] = {
                     "entry": entry,
                     "variants": variants,
@@ -322,6 +634,7 @@ def configure_models(context: CliContext) -> None:
             choices=model_choices,
             default=default_value,
             qmark="🧠",
+            style=CLI_STYLE,
         ).ask()
 
         if selection is None:
@@ -340,7 +653,14 @@ def configure_models(context: CliContext) -> None:
                     variant_title += " (default)"
                 if variant["preset_key"] == group_data["current_key"]:
                     variant_title += " [current]"
-                variant_choices.append(questionary.Choice(title=variant_title, value=variant["preset_key"]))
+                variant_choices.append(
+                    model_variant_choice(
+                        variant_title,
+                        variant["variant_display"],
+                        entry["provider_display"],
+                        value=variant["preset_key"],
+                    )
+                )
 
             preferred_default = group_data["current_key"] or group_data["default_key"]
             if not preferred_default or not any(choice.value == preferred_default for choice in variant_choices):
@@ -351,6 +671,7 @@ def configure_models(context: CliContext) -> None:
                 choices=variant_choices,
                 default=preferred_default,
                 qmark="🧠",
+                style=CLI_STYLE,
             ).ask()
 
             if selection is None:

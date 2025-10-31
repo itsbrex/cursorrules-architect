@@ -18,6 +18,13 @@ from pathlib import Path
 from rich.console import Console
 
 from agentrules.cli.ui.analysis_view import AnalysisView
+from agentrules.config_service import (
+    get_effective_exclusions,
+    get_exclusion_overrides,
+    get_rules_filename,
+    should_generate_cursorignore,
+    should_generate_phase_outputs,
+)
 from config.agents import MODEL_CONFIG
 from core.analysis import (
     FinalAnalysis,
@@ -28,7 +35,6 @@ from core.analysis import (
     Phase5Analysis,
 )
 from core.analysis.events import AnalysisEvent, AnalysisEventSink
-from core.utils.constants import FINAL_RULES_FILENAME
 from core.utils.file_creation.cursorignore import create_cursorignore
 from core.utils.file_creation.phases_output import save_phase_outputs
 from core.utils.file_system.tree_generator import get_project_tree
@@ -161,6 +167,13 @@ class ProjectAnalyzer:
         self.consolidated_report: dict = {}
         self.final_analysis: dict = {}
 
+        self.exclusion_overrides = None
+        self.effective_exclusions: tuple[set[str], set[str], set[str]] = (
+            set(),
+            set(),
+            set(),
+        )
+
         self.phase1_analyzer = Phase1Analysis()
         self.phase2_analyzer = Phase2Analysis()
         self.phase3_analyzer = Phase3Analysis()
@@ -202,7 +215,15 @@ class ProjectAnalyzer:
         event_sink = _ViewEventSink(view)
         self._apply_event_sink(event_sink)
 
-        tree_with_delimiters = get_project_tree(self.directory)
+        self.exclusion_overrides = get_exclusion_overrides()
+        exclude_dirs, exclude_files, exclude_exts = get_effective_exclusions()
+        self.effective_exclusions = (exclude_dirs, exclude_files, exclude_exts)
+        tree_with_delimiters = get_project_tree(
+            self.directory,
+            exclude_dirs=exclude_dirs,
+            exclude_files=exclude_files,
+            exclude_extensions=exclude_exts,
+        )
         tree_for_analysis = _strip_tree_delimiters(tree_with_delimiters)
 
         package_info: dict = {}
@@ -361,32 +382,81 @@ class ProjectAnalyzer:
             "metrics": {"time": time.time() - metrics_start_time},
         }
 
-        save_phase_outputs(self.directory, analysis_data)
+        rules_filename = get_rules_filename()
+        include_phase_outputs = should_generate_phase_outputs()
 
-        success, message = create_cursorignore(str(self.directory))
-        if success:
-            self.console.print(f"[green]{message}[/]")
+        exclusion_summary = None
+        overrides = self.exclusion_overrides
+        if overrides and not overrides.is_empty():
+            dirs, files, exts = self.effective_exclusions
+            exclusion_summary = {
+                "added": {
+                    "directories": sorted(set(overrides.add_directories)),
+                    "files": sorted(set(overrides.add_files)),
+                    "extensions": sorted(set(overrides.add_extensions)),
+                },
+                "removed": {
+                    "directories": sorted(set(overrides.remove_directories)),
+                    "files": sorted(set(overrides.remove_files)),
+                    "extensions": sorted(set(overrides.remove_extensions)),
+                },
+                "effective": {
+                    "directories": sorted(dirs),
+                    "files": sorted(files),
+                    "extensions": sorted(exts),
+                },
+            }
+
+        save_phase_outputs(
+            self.directory,
+            analysis_data,
+            rules_filename,
+            include_phase_files=include_phase_outputs,
+            exclusion_summary=exclusion_summary,
+        )
+
+        if should_generate_cursorignore():
+            success, message = create_cursorignore(str(self.directory))
+            if success:
+                self.console.print(f"[green]{message}[/]")
+            else:
+                self.console.print(f"[yellow]{message}[/]")
         else:
-            self.console.print(f"[yellow]{message}[/]")
+            self.console.print("[dim]Skipped .cursorignore generation (disabled in settings).[/]")
 
-        success, message = clean_cursorrules(str(self.directory))
+        success, message = clean_cursorrules(str(self.directory), filename=rules_filename)
         if success:
             self.console.print("[green]Cleaned cursor rules file: removed text before 'You are...'[/]")
         else:
             self.console.print(f"[yellow]{message}[/]")
 
+        if include_phase_outputs:
+            self.console.print(
+                f"[green]Individual phase outputs saved to:[/] {self.directory}/phases_output/"
+            )
         self.console.print(
-            f"[green]Individual phase outputs saved to:[/] {self.directory}/phases_output/"
-        )
-        self.console.print(
-            f"[green]Cursor rules created at:[/] {self.directory}/{FINAL_RULES_FILENAME}"
+            f"[green]Cursor rules created at:[/] {self.directory}/{rules_filename}"
         )
         self.console.print(
             f"[green]Cursor ignore created at:[/] {self.directory}/.cursorignore"
         )
-        self.console.print(
-            f"[green]Execution metrics saved to:[/] {self.directory}/phases_output/metrics.md"
-        )
+        if include_phase_outputs:
+            self.console.print(
+                f"[green]Execution metrics saved to:[/] {self.directory}/phases_output/metrics.md"
+            )
+        else:
+            self.console.print("[dim]Skipped phase report archive (disabled in settings).[/]")
+
+        if exclusion_summary:
+            added_total = sum(len(items) for items in exclusion_summary["added"].values())
+            removed_total = sum(len(items) for items in exclusion_summary["removed"].values())
+            details: list[str] = []
+            if added_total:
+                details.append(f"added {added_total} rule{'s' if added_total != 1 else ''}")
+            if removed_total:
+                details.append(f"removed {removed_total} default{'s' if removed_total != 1 else ''}")
+            detail_text = ", ".join(details) if details else "custom overrides active"
+            self.console.print(f"[dim]Exclusion overrides applied ({detail_text}).[/]")
 
 
 def run_analysis(directory: Path, console: Console | None = None) -> str:

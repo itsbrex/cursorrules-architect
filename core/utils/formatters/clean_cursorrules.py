@@ -15,12 +15,11 @@ This ensures that cursor rules files start with the proper system prompt format.
 import os
 import re
 
-from core.utils.constants import FINAL_RULES_FILENAME
+from core.utils.constants import DEFAULT_RULES_FILENAME
 
 # ====================================================
 # Constants
 # ====================================================
-RULES_FILE_NAME = FINAL_RULES_FILENAME  # Default output filename for the agent rules
 START_PATTERN = re.compile(r'\bYou are\b', re.IGNORECASE)  # Pattern to find "You are" text
 
 
@@ -70,7 +69,7 @@ def clean_cursorrules_file(file_path: str) -> tuple[bool, str]:
 # Function: clean_cursorrules
 # This function finds and cleans an AGENTS.md rules file in the specified directory
 # ====================================================
-def clean_cursorrules(directory: str | None = None) -> tuple[bool, str]:
+def clean_cursorrules(directory: str | None = None, *, filename: str | None = None) -> tuple[bool, str]:
     """
     Find and clean an AGENTS.md rules file in the specified directory.
 
@@ -81,9 +80,10 @@ def clean_cursorrules(directory: str | None = None) -> tuple[bool, str]:
         Tuple[bool, str]: Success status and message
     """
     # Determine the full path for the rules file
+    target_filename = filename or DEFAULT_RULES_FILENAME
     if directory:
-        cursorrules_path = os.path.join(directory, RULES_FILE_NAME)
+        cursorrules_path = os.path.join(directory, target_filename)
     else:
-        cursorrules_path = RULES_FILE_NAME
+        cursorrules_path = target_filename
 
     return clean_cursorrules_file(cursorrules_path)

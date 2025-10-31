@@ -23,7 +23,7 @@ from config.exclusions import (  # Importing predefined exclusion lists
     EXCLUDED_EXTENSIONS,
     EXCLUDED_FILES,
 )
-from core.utils.constants import FINAL_RULES_FILENAME
+from core.utils.constants import DEFAULT_RULES_FILENAME
 
 # ====================================================
 # Setting Up Default Exclusion Constants
@@ -34,14 +34,17 @@ from core.utils.constants import FINAL_RULES_FILENAME
 # Use the centralized exclusion constants
 DEFAULT_EXCLUDE_DIRS = EXCLUDED_DIRS
 
-# Combine excluded files and patterns based on extensions
-DEFAULT_EXCLUDE_PATTERNS = set()
-# Add excluded files
-for file in EXCLUDED_FILES:
-    DEFAULT_EXCLUDE_PATTERNS.add(file)
-# Add excluded extensions as patterns
-for ext in EXCLUDED_EXTENSIONS:
-    DEFAULT_EXCLUDE_PATTERNS.add(f'*{ext}')
+
+def _build_exclude_patterns(files: set[str], extensions: set[str]) -> set[str]:
+    patterns: set[str] = set()
+    for file in files:
+        patterns.add(file)
+    for ext in extensions:
+        patterns.add(f"*{ext}")
+    return patterns
+
+
+DEFAULT_EXCLUDE_PATTERNS = _build_exclude_patterns(EXCLUDED_FILES, EXCLUDED_EXTENSIONS)
 
 # ====================================================
 # Defining File Type Icons and Descriptions
@@ -267,7 +270,7 @@ def generate_key(tree_content: list[str]) -> list[str]:
     return key_lines + [""]  # Add empty line after key
 
 
-def save_tree_to_file(tree_content: list[str], path: Path) -> str:
+def save_tree_to_file(tree_content: list[str], path: Path, *, rules_filename: str | None = None) -> str:
     """
     Save the tree structure to the generated rules file.
 
@@ -278,7 +281,7 @@ def save_tree_to_file(tree_content: list[str], path: Path) -> str:
     Returns:
         The path to the saved file
     """
-    output_file = path / FINAL_RULES_FILENAME
+    output_file = path / (rules_filename or DEFAULT_RULES_FILENAME)
 
     # Remove delimiters if they exist
     filtered_content = tree_content
@@ -315,7 +318,14 @@ def save_tree_to_file(tree_content: list[str], path: Path) -> str:
     return str(output_file)
 
 
-def get_project_tree(directory: Path, max_depth: int = 4) -> list[str]:
+def get_project_tree(
+    directory: Path,
+    max_depth: int = 4,
+    *,
+    exclude_dirs: set[str] | None = None,
+    exclude_files: set[str] | None = None,
+    exclude_extensions: set[str] | None = None,
+) -> list[str]:
     """
     Generate a tree structure for a project directory.
     This is the main function to be used from other modules.
@@ -328,11 +338,16 @@ def get_project_tree(directory: Path, max_depth: int = 4) -> list[str]:
         List of strings representing the tree structure with delimiters
     """
     # Generate the tree
+    dirs = exclude_dirs or DEFAULT_EXCLUDE_DIRS
+    files = exclude_files or EXCLUDED_FILES
+    extensions = exclude_extensions or EXCLUDED_EXTENSIONS
+    patterns = _build_exclude_patterns(set(files), set(extensions))
+
     tree = generate_tree(
         directory,
         max_depth=max_depth,
-        exclude_dirs=DEFAULT_EXCLUDE_DIRS,
-        exclude_patterns=DEFAULT_EXCLUDE_PATTERNS
+        exclude_dirs=dirs,
+        exclude_patterns=patterns,
     )
 
     # Add the key
