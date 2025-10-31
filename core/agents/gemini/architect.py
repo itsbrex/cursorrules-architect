@@ -19,12 +19,17 @@ from .tooling import resolve_tool_config
 logger = logging.getLogger("project_extractor")
 
 
+DEFAULT_THINKING_BUDGET = 16000
+DYNAMIC_THINKING_BUDGET = -1
+DISABLED_THINKING_BUDGET = 0
+
+
 class GeminiArchitect(BaseArchitect):
     """Architect class for interacting with Google's Gemini models."""
 
     def __init__(
         self,
-        model_name: str = "gemini-2.0-flash",
+        model_name: str = "gemini-2.5-flash",
         reasoning: ReasoningMode = ReasoningMode.DISABLED,
         name: str | None = None,
         role: str | None = None,
@@ -84,15 +89,22 @@ class GeminiArchitect(BaseArchitect):
         if api_tools:
             config_kwargs["tools"] = api_tools
 
-        if self.reasoning == ReasoningMode.ENABLED:
-            config_kwargs["thinking_config"] = genai_types.ThinkingConfig(thinking_budget=16000)
+        thinking_config = self._build_thinking_config()
+        if thinking_config is not None:
+            config_kwargs["thinking_config"] = thinking_config
 
         generation_config = genai_types.GenerateContentConfig(**config_kwargs) if config_kwargs else None
 
         agent_name = self.name or "Gemini Architect"
         details: list[str] = []
-        if self.reasoning == ReasoningMode.ENABLED:
-            details.append("with thinking")
+        if thinking_config is not None:
+            budget = thinking_config.thinking_budget
+            if budget == DISABLED_THINKING_BUDGET:
+                details.append("with thinking disabled")
+            elif budget == DYNAMIC_THINKING_BUDGET:
+                details.append("with dynamic thinking")
+            else:
+                details.append(f"with thinking (budget={budget})")
         if api_tools:
             details.append("with tools enabled")
         detail_suffix = f" ({', '.join(details)})" if details else ""
@@ -186,13 +198,9 @@ class GeminiArchitect(BaseArchitect):
 
     # Internal helpers -----------------------------------------------------------
     def _resolve_consolidation_model(self) -> str:
-        if self.reasoning != ReasoningMode.ENABLED:
+        if self.reasoning == ReasoningMode.DISABLED:
             return self.model_name
-        if "gemini-2.0-flash" in self.model_name:
-            return "gemini-2.0-flash-thinking-exp"
-        if "gemini-2.5-pro" in self.model_name:
-            return "gemini-2.5-pro-exp-03-25"
-        return self.model_name
+        return self._stable_model_name()
 
     def _client_not_initialized_result(self) -> dict[str, Any]:
         message = self._client_error_hint or "Gemini client not initialized."
@@ -200,3 +208,32 @@ class GeminiArchitect(BaseArchitect):
             "agent": self.name or "Gemini Architect",
             "error": message,
         }
+
+    def _build_thinking_config(self) -> genai_types.ThinkingConfig | None:
+        reasoning_mode = self.reasoning
+        if reasoning_mode == ReasoningMode.DYNAMIC:
+            return genai_types.ThinkingConfig(thinking_budget=DYNAMIC_THINKING_BUDGET)
+        if reasoning_mode == ReasoningMode.ENABLED:
+            return genai_types.ThinkingConfig(thinking_budget=DEFAULT_THINKING_BUDGET)
+        if reasoning_mode == ReasoningMode.DISABLED:
+            if self._model_supports_disabling_thinking():
+                return genai_types.ThinkingConfig(thinking_budget=DISABLED_THINKING_BUDGET)
+            logger.debug(
+                "Model %s does not support disabling thinking; falling back to dynamic budget.",
+                self.model_name,
+            )
+            return genai_types.ThinkingConfig(thinking_budget=DYNAMIC_THINKING_BUDGET)
+        return None
+
+    def _model_supports_disabling_thinking(self) -> bool:
+        normalized = self.model_name.lower()
+        # Gemini 2.5 Pro does not allow disabling thinking according to the docs.
+        return "gemini-2.5-pro" not in normalized
+
+    def _stable_model_name(self) -> str:
+        normalized = self.model_name.lower()
+        if "gemini-2.5-flash" in normalized:
+            return "gemini-2.5-flash"
+        if "gemini-2.5-pro" in normalized:
+            return "gemini-2.5-pro"
+        return self.model_name

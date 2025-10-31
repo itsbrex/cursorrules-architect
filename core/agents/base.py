@@ -27,6 +27,7 @@ class ReasoningMode(Enum):
     # General modes (primarily for Anthropic)
     ENABLED = "enabled"
     DISABLED = "disabled"
+    DYNAMIC = "dynamic"
 
     # OpenAI-specific reasoning effort levels (for o3, o4-mini, gpt-5)
     MINIMAL = "minimal"
