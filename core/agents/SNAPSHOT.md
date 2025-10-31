@@ -1,32 +1,32 @@
 .
-├── __init__.py                # Public entry point for the agents package, exposing factory method.
-├── anthropic/                 # Contains all logic for interacting with Anthropic's Claude models.
-│   ├── __init__.py            # Public entry point for the Anthropic sub-package.
-│   ├── architect.py           # Implements the BaseArchitect for Anthropic models.
-│   ├── client.py              # Lazy Anthropic SDK client helpers.
-│   ├── prompting.py           # Prompt templates and formatters for Claude agents.
-│   ├── request_builder.py     # Constructs Claude Messages API payloads.
-│   ├── response_parser.py     # Normalizes Anthropic responses into findings/tool calls.
-│   └── tooling.py             # Provider-specific tool configuration helpers.
+├── __init__.py                # Exposes a factory function for creating architect agents.
+├── anthropic/                 # Contains the implementation for the Anthropic (Claude) agent.
+│   ├── __init__.py            # Exposes the main AnthropicArchitect class for the package.
+│   ├── architect.py           # Implements the BaseArchitect interface for Anthropic models.
+│   ├── client.py              # Manages the Anthropic SDK client instance.
+│   ├── prompting.py           # Provides prompt formatting helpers for Anthropic models.
+│   ├── request_builder.py     # Constructs API request payloads for Anthropic models.
+│   ├── response_parser.py     # Parses responses from the Anthropic API.
+│   └── tooling.py             # Handles tool configuration for Anthropic models.
 ├── base.py                    # Defines the abstract BaseArchitect class and common enums.
-├── deepseek.py                # Implements the architect for DeepSeek models via OpenAI-compatible API.
-├── factory/                   # Contains the logic for creating different architect instances.
-│   ├── __init__.py            # Exposes the architect factory function.
-│   └── factory.py             # Implements a factory to create architect instances based on configuration.
-├── gemini/                    # Contains all logic for interacting with Google Gemini models.
-│   ├── __init__.py            # Public entry point for the Gemini sub-package.
-│   ├── architect.py           # Implements the BaseArchitect for Google Gemini models.
-│   ├── client.py              # Provides helpers for creating and interacting with the Gemini API client.
-│   ├── errors.py              # Defines custom exception types for the Gemini provider.
-│   ├── legacy.py              # Provides a backward-compatible GeminiAgent wrapper.
-│   ├── prompting.py           # Contains helper functions for formatting prompts for Gemini models.
-│   ├── response_parser.py     # Utilities for parsing responses from the Gemini API.
-│   └── tooling.py             # Helper functions for handling tool configurations for Gemini.
-└── openai/                    # Contains all logic for interacting with OpenAI models.
-    ├── __init__.py            # Public entry point for the OpenAI sub-package.
-    ├── architect.py           # Implements the BaseArchitect for OpenAI models.
-    ├── client.py              # Manages the shared OpenAI client and dispatches API requests.
-    ├── compat.py              # Provides a backward-compatible OpenAIAgent shim.
-    ├── config.py              # Defines default configurations for various OpenAI models.
+├── deepseek.py                # Implements the BaseArchitect interface for DeepSeek models.
+├── factory/                   # Contains the factory for creating different architect instances.
+│   ├── __init__.py            # Exposes the main factory function.
+│   └── factory.py             # Implements the logic to create architects based on configuration.
+├── gemini/                    # Contains the implementation for the Google Gemini agent.
+│   ├── __init__.py            # Exposes the GeminiArchitect and legacy agent classes.
+│   ├── architect.py           # Implements the BaseArchitect interface for Gemini models.
+│   ├── client.py              # Manages the Gemini SDK client and async requests.
+│   ├── errors.py              # Defines custom exceptions for the Gemini provider.
+│   ├── legacy.py              # Provides a backward-compatible wrapper for the Gemini agent.
+│   ├── prompting.py           # Provides prompt formatting helpers for Gemini models.
+│   ├── response_parser.py     # Parses responses from the Gemini API.
+│   └── tooling.py             # Handles tool configuration for Gemini models.
+└── openai/                    # Contains the implementation for the OpenAI agent.
+    ├── __init__.py            # Exposes the OpenAIArchitect and legacy agent classes.
+    ├── architect.py           # Implements the BaseArchitect interface for OpenAI models.
+    ├── client.py              # Manages the OpenAI SDK client and executes requests.
+    ├── compat.py              # Provides a backward-compatible wrapper for the OpenAI agent.
+    ├── config.py              # Defines default configurations for different OpenAI models.
     ├── request_builder.py     # Constructs API request payloads for OpenAI models.
-    └── response_parser.py     # Utilities for parsing and normalizing responses from OpenAI APIs.
+    └── response_parser.py     # Parses responses from the OpenAI API.
