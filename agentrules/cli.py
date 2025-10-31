@@ -9,7 +9,7 @@ import os
 import time
 from pathlib import Path
 from textwrap import dedent
-from typing import List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import questionary
 import typer
@@ -83,33 +83,137 @@ def _masked(key: Optional[str]) -> str:
 
 def _configure_keys(console: Console) -> None:
     console.print("\n[bold]Configure Provider API Keys[/bold]")
-    console.print("Leave blank to keep the current value.\n")
+    console.print("Select a provider to update. Leave the key blank to keep the current value.\n")
 
-    for provider, env_var in PROVIDER_ENV_MAP.items():
-        current_display = _masked(get_current_provider_keys().get(provider))
+    updated = False
+
+    while True:
+        current_keys = get_current_provider_keys()
+        choices: List[questionary.Choice] = []
+        for provider, env_var in PROVIDER_ENV_MAP.items():
+            display_label = f"{provider.title()} ({env_var}) [{_masked(current_keys.get(provider))}]"
+            choices.append(questionary.Choice(title=display_label, value=provider))
+        choices.append(questionary.Choice(title="Done", value="__DONE__"))
+
+        selection = questionary.select(
+            "Select provider to configure:",
+            choices=choices,
+            qmark="🔐",
+        ).ask()
+
+        if selection is None:
+            console.print("[yellow]Configuration cancelled.[/]")
+            return
+        if selection == "__DONE__":
+            break
+
+        env_var = PROVIDER_ENV_MAP[selection]
+        current_display = _masked(current_keys.get(selection))
         answer = questionary.password(
-            f"{provider.title()} API key ({env_var}) [{current_display}]:",
+            f"Enter {selection.title()} API key ({env_var}) [{current_display}]:",
             qmark="🔐",
             default="",
         ).ask()
+
         if answer is None:
             console.print("[yellow]Configuration cancelled.[/]")
             return
-        if answer.strip():
-            set_provider_key(provider, answer.strip())
 
-    console.print("[green]Provider keys updated.[/]")
-    model_config.apply_user_overrides()
+        trimmed = answer.strip()
+        if trimmed:
+            set_provider_key(selection, trimmed)
+            updated = True
+            console.print(f"[green]{selection.title()} key updated.[/]")
+        else:
+            console.print("[dim]No changes made.[/]")
+
+    if updated:
+        model_config.apply_user_overrides()
+        console.print("[green]Provider keys updated.[/]")
+    else:
+        console.print("[dim]No provider keys changed.[/]")
 
 
 def _configure_models(console: Console) -> None:
     console.print("\n[bold]Configure model presets per phase[/bold]")
-    console.print("Select the model to use for each phase. Choose 'Reset to default' to revert.\n")
+    console.print("Select a phase to adjust its model preset. Choose 'Reset to default' inside the phase menu to revert.\n")
 
     provider_keys = get_current_provider_keys()
     active = model_config.get_active_presets()
+    updated = False
 
-    for phase in model_config.PHASE_SEQUENCE:
+    def _split_preset_label(label: str) -> Tuple[str, Optional[str]]:
+        if " (" in label and label.endswith(")"):
+            base, remainder = label.split(" (", 1)
+            return base, remainder[:-1]
+        return label, None
+
+    def _variant_display_text(variant_label: Optional[str]) -> str:
+        if not variant_label:
+            return "Default"
+        return variant_label[0].upper() + variant_label[1:]
+
+    while True:
+        phase_choices: List[questionary.Choice] = []
+        handled_phases: set[str] = set()
+
+        def _current_display(key: Optional[str]) -> str:
+            info = model_config.get_preset_info(key) if key else None
+            if not info:
+                return "Not configured"
+            return f"{info.label} [{info.provider_display}]"
+
+        for phase in model_config.PHASE_SEQUENCE:
+            if phase in handled_phases:
+                continue
+
+            if phase == "phase1" and "researcher" in model_config.PHASE_SEQUENCE:
+                header_title = model_config.get_phase_title("phase1")
+                phase_choices.append(questionary.Separator(header_title))
+
+                general_key = active.get("phase1", model_config.get_default_preset_key("phase1"))
+                general_label = _current_display(general_key)
+                phase_choices.append(
+                    questionary.Choice(
+                        title=f"├─ General Agents [{general_label}]",
+                        value="phase1",
+                    )
+                )
+
+                researcher_key = active.get("researcher", model_config.get_default_preset_key("researcher"))
+                researcher_label = _current_display(researcher_key)
+                researcher_title = model_config.get_phase_title("researcher")
+                phase_choices.append(
+                    questionary.Choice(
+                        title=f"└─ {researcher_title} [{researcher_label}]",
+                        value="researcher",
+                    )
+                )
+
+                handled_phases.update({"phase1", "researcher"})
+                continue
+
+            title = model_config.get_phase_title(phase)
+            current_key = active.get(phase, model_config.get_default_preset_key(phase))
+            display_label = _current_display(current_key)
+            phase_choices.append(questionary.Choice(title=f"{title} [{display_label}]", value=phase))
+            handled_phases.add(phase)
+
+        phase_choices.append(questionary.Choice(title="Done", value="__DONE__"))
+
+        phase_selection = questionary.select(
+            "Select phase to configure:",
+            choices=phase_choices,
+            qmark="🧠",
+        ).ask()
+
+        if phase_selection is None:
+            console.print("[yellow]Model configuration cancelled.[/]")
+            return
+        if phase_selection == "__DONE__":
+            break
+
+        phase = phase_selection
         title = model_config.get_phase_title(phase)
         presets = model_config.get_available_presets_for_phase(phase, provider_keys)
         if not presets:
@@ -120,31 +224,87 @@ def _configure_models(console: Console) -> None:
         current_key = active.get(phase, default_key)
         default_info = model_config.get_preset_info(default_key) if default_key else None
 
-        choices: List[questionary.Choice] = []
+        model_choices: List[questionary.Choice] = []
         if default_info:
-            choices.append(
+            model_choices.append(
                 questionary.Choice(
                     title=f"Reset to default ({default_info.label} – {default_info.provider_display})",
                     value="__RESET__",
                 )
             )
         else:
-            choices.append(questionary.Choice(title="Reset to default", value="__RESET__"))
+            model_choices.append(questionary.Choice(title="Reset to default", value="__RESET__"))
 
+        grouped_entries: List[Dict[str, Any]] = []
+        grouped_lookup: Dict[Tuple[str, str, str], Dict[str, Any]] = {}
         for preset in presets:
-            label = f"{preset.label} [{preset.provider_display}]"
-            if preset.key == default_key:
-                label += " (default)"
-            if preset.key == current_key:
-                label += " [current]"
-            choices.append(questionary.Choice(title=label, value=preset.key))
+            base_label, variant_label = _split_preset_label(preset.label)
+            group_key = (preset.provider_slug, base_label, preset.provider_display)
+            if group_key not in grouped_lookup:
+                grouped_lookup[group_key] = {
+                    "base_label": base_label,
+                    "provider_display": preset.provider_display,
+                    "variants": [],
+                }
+                grouped_entries.append(grouped_lookup[group_key])
+            grouped_lookup[group_key]["variants"].append(
+                {
+                    "preset": preset,
+                    "preset_key": preset.key,
+                    "variant_label": variant_label,
+                    "variant_display": _variant_display_text(variant_label),
+                }
+            )
 
-        default_choice = next((choice.title for choice in choices if choice.value == current_key), choices[0].title)
+        group_selection_map: Dict[str, Dict[str, Any]] = {}
+        for idx, entry in enumerate(grouped_entries):
+            variants = entry["variants"]
+            if len(variants) == 1:
+                variant = variants[0]
+                title_label = f"{entry['base_label']} [{entry['provider_display']}]"
+                if variant["preset_key"] == default_key:
+                    title_label += " (default)"
+                if variant["preset_key"] == current_key:
+                    title_label += " [current]"
+                model_choices.append(questionary.Choice(title=title_label, value=variant["preset_key"]))
+            else:
+                current_variant = next((v for v in variants if v["preset_key"] == current_key), None)
+                default_variant = next((v for v in variants if v["preset_key"] == default_key), None)
+                summary = f"{entry['base_label']} [{entry['provider_display']}] – {len(variants)} options"
+                if current_variant:
+                    summary += f" (current: {current_variant['variant_display']})"
+                elif default_variant:
+                    summary += f" (default: {default_variant['variant_display']})"
+                group_value = f"__GROUP__{idx}"
+                model_choices.append(questionary.Choice(title=summary, value=group_value))
+                group_selection_map[group_value] = {
+                    "entry": entry,
+                    "variants": variants,
+                    "current_key": current_key,
+                    "default_key": default_key,
+                }
+
+        default_value = model_choices[0].value
+        if current_key and any(choice.value == current_key for choice in model_choices):
+            default_value = current_key
+        else:
+            for group_value, group_data in group_selection_map.items():
+                if any(v["preset_key"] == current_key for v in group_data["variants"]):
+                    default_value = group_value
+                    break
+            else:
+                if default_key and any(choice.value == default_key for choice in model_choices):
+                    default_value = default_key
+                else:
+                    for group_value, group_data in group_selection_map.items():
+                        if any(v["preset_key"] == default_key for v in group_data["variants"]):
+                            default_value = group_value
+                            break
 
         selection = questionary.select(
             f"{title}:",
-            choices=choices,
-            default=default_choice,
+            choices=model_choices,
+            default=default_value,
             qmark="🧠",
         ).ask()
 
@@ -152,16 +312,56 @@ def _configure_models(console: Console) -> None:
             console.print("[yellow]Model configuration cancelled.[/]")
             return
 
+        if selection in group_selection_map:
+            group_data = group_selection_map[selection]
+            entry = group_data["entry"]
+            variants = group_data["variants"]
+
+            variant_choices: List[questionary.Choice] = []
+            for variant in variants:
+                variant_title = variant["variant_display"]
+                if variant["preset_key"] == group_data["default_key"]:
+                    variant_title += " (default)"
+                if variant["preset_key"] == group_data["current_key"]:
+                    variant_title += " [current]"
+                variant_choices.append(questionary.Choice(title=variant_title, value=variant["preset_key"]))
+
+            preferred_default = group_data["current_key"] or group_data["default_key"]
+            if not preferred_default or not any(choice.value == preferred_default for choice in variant_choices):
+                preferred_default = variant_choices[0].value
+
+            selection = questionary.select(
+                f"{entry['base_label']} [{entry['provider_display']}] – choose variant:",
+                choices=variant_choices,
+                default=preferred_default,
+                qmark="🧠",
+            ).ask()
+
+            if selection is None:
+                console.print("[yellow]Model configuration cancelled.[/]")
+                return
+
         if selection == "__RESET__":
             set_phase_model(phase, None)
             active.pop(phase, None)
+            console.print(f"[green]{title} reset to default preset.[/]")
         else:
             set_phase_model(phase, selection)
             active[phase] = selection
+            preset_info = model_config.get_preset_info(selection)
+            if preset_info:
+                console.print(f"[green]{title} now uses {preset_info.label} [{preset_info.provider_display}].[/]")
+            else:
+                console.print(f"[green]{title} preset updated.[/]")
+        updated = True
 
-    model_config.apply_user_overrides({phase: key for phase, key in active.items() if phase in model_config.PHASE_SEQUENCE})
-    console.print("[green]Model selections saved.[/]")
-    model_config.apply_user_overrides()
+    if updated:
+        overrides = {phase: key for phase, key in active.items() if phase in model_config.PHASE_SEQUENCE}
+        model_config.apply_user_overrides(overrides)
+        console.print("[green]Model selections saved.[/]")
+        model_config.apply_user_overrides()
+    else:
+        console.print("[dim]No model presets changed.[/]")
 
 
 def _show_keys(console: Console) -> None:
