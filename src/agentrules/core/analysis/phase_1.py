@@ -251,28 +251,33 @@ class Phase1Analysis:
 
         if executed_tools:
             latest_response["executed_tools"] = executed_tools
+        else:
+            latest_response.setdefault("executed_tools", [])
 
-        if not tool_requested:
-            logging.warning(
-                "[bold yellow]Phase 1, Part 2:[/bold yellow] Skipping documentation research (no tools executed)."
-            )
-            return {
-                "status": "skipped",
-                "reason": "researcher-no-tools",
-                "executed_tools": executed_tools,
-            }
+        if tool_requested:
+            if not tool_succeeded:
+                logging.warning(
+                    "[bold red]Phase 1, Part 2:[/bold red] Skipping documentation research (all tools failed)."
+                )
+                return {
+                    "status": "skipped",
+                    "reason": "researcher-tools-failed",
+                    "executed_tools": executed_tools,
+                }
+            return latest_response
 
-        if not tool_succeeded:
-            logging.warning(
-                "[bold red]Phase 1, Part 2:[/bold red] Skipping documentation research (all tools failed)."
-            )
-            return {
-                "status": "skipped",
-                "reason": "researcher-tools-failed",
-                "executed_tools": executed_tools,
-            }
+        # No tools were requested. If the model still produced findings, surface them.
+        if latest_response.get("findings"):
+            return latest_response
 
-        return latest_response
+        logging.warning(
+            "[bold yellow]Phase 1, Part 2:[/bold yellow] Skipping documentation research (no tools executed)."
+        )
+        return {
+            "status": "skipped",
+            "reason": "researcher-no-tools",
+            "executed_tools": executed_tools,
+        }
 
     async def _handle_anthropic_tool_calls(self, tool_calls: Any) -> list[dict[str, Any]]:
         """Execute Anthropic-style tool calls and return structured results."""

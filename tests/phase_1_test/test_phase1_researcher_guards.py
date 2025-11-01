@@ -64,8 +64,9 @@ class Phase1ResearcherGuardrailsTests(unittest.IsolatedAsyncioTestCase):
             result = await analyzer.run([], {})
 
         research_output = result["documentation_research"]
-        self.assertEqual(research_output["status"], "skipped")
-        self.assertEqual(research_output["reason"], "researcher-no-tools")
+        self.assertNotEqual(research_output.get("status"), "skipped")
+        self.assertIn("findings", research_output)
+        self.assertEqual(research_output.get("executed_tools"), [])
 
     async def test_researcher_skipped_when_all_tools_fail(self) -> None:
         async def failing_tavily(query: str, depth: str, max_results: int) -> str:  # pragma: no cover - injected

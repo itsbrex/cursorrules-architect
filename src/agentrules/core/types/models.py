@@ -74,27 +74,22 @@ CLAUDE_OPUS_WITH_REASONING = ModelConfig(
 # The `CLAUDE_WITH_TOOLS` example is replaced by the factory function below
 # to create a more flexible, provider-agnostic "Researcher" configuration.
 
-def create_researcher_config(provider: ModelProvider, model_name: str) -> ModelConfig:
+def create_researcher_config(base_config: ModelConfig) -> ModelConfig:
     """
     Creates a 'Researcher' agent configuration for a specific provider and model.
 
     This factory function standardizes the creation of a research-oriented agent,
-    which comes pre-configured to use tools (like web search) and has reasoning
-    enabled by default.
+    which comes pre-configured to use tools (like web search) while respecting
+    the reasoning mode chosen in the base configuration.
 
     Args:
-        provider: The model provider (e.g., ModelProvider.ANTHROPIC).
-        model_name: The specific model name (e.g., "claude-sonnet-4-5").
+        base_config: The base model configuration selected by the user.
 
     Returns:
         A ModelConfig instance configured for research.
     """
-    return ModelConfig(
-        provider=provider,
-        model_name=model_name,
-        reasoning=ReasoningMode.ENABLED,  # Reasoning is crucial for research
-        tools_config={"enabled": True, "tools": None},  # Ready for tools like web_search
-        text_verbosity=None
+    return base_config._replace(
+        tools_config={"enabled": True, "tools": None},
     )
 
 # O1 configurations with different reasoning levels

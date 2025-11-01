@@ -113,10 +113,7 @@ def get_researcher_architect(
     if not base_config:
         raise ValueError("No model configuration found for 'researcher'")
 
-    researcher_config = create_researcher_config(
-        provider=base_config.provider,
-        model_name=base_config.model_name
-    )
+    researcher_config = create_researcher_config(base_config)
 
     return ArchitectFactory.create_architect(
         model_config=researcher_config,

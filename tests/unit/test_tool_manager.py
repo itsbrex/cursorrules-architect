@@ -57,16 +57,16 @@ def test_get_provider_tools_gemini_conversion():
     converted = ToolManager.get_provider_tools(tools, ModelProvider.GEMINI)
     assert isinstance(converted, list) and len(converted) == 1
     tool = converted[0]
-    tool_cls: Any = getattr(genai_types, "Tool")
-    fn_decl_cls: Any = getattr(genai_types, "FunctionDeclaration")
+    tool_cls: Any = getattr(genai_types, "Tool")  # noqa: B009 - dynamic import for stub-less SDK
+    fn_decl_cls: Any = getattr(genai_types, "FunctionDeclaration")  # noqa: B009 - dynamic import for stub-less SDK
     assert isinstance(tool, tool_cls)
-    function_decls = getattr(tool, "function_declarations")
+    function_decls = getattr(tool, "function_declarations")  # noqa: B009
     assert function_decls is not None
     assert len(function_decls) == 1
     fn_decl = function_decls[0]
     assert isinstance(fn_decl, fn_decl_cls)
-    assert getattr(fn_decl, "name") == "tavily_web_search"
-    params_schema = getattr(fn_decl, "parameters_json_schema")
+    assert getattr(fn_decl, "name") == "tavily_web_search"  # noqa: B009
+    params_schema = getattr(fn_decl, "parameters_json_schema")  # noqa: B009
     assert params_schema["type"] == "object"
 
 
