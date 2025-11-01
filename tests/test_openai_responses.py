@@ -3,9 +3,9 @@ import unittest
 
 os.environ.setdefault("OPENAI_API_KEY", "test")
 
-from core.agents.base import ReasoningMode
-from core.agents.openai import OpenAIArchitect
-from core.agents.openai.response_parser import parse_response
+from agentrules.core.agents.base import ReasoningMode
+from agentrules.core.agents.openai import OpenAIArchitect
+from agentrules.core.agents.openai.response_parser import parse_response
 
 
 class OpenAIResponsesTests(unittest.TestCase):

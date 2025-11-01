@@ -11,7 +11,7 @@ from datetime import datetime
 # Add the project root to the Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
-from config.prompts.final_analysis_prompt import format_final_analysis_prompt
+from agentrules.config.prompts.final_analysis_prompt import format_final_analysis_prompt
 
 
 def test_temporal_framework():

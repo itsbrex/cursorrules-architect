@@ -10,14 +10,14 @@ from datetime import datetime
 
 import pytest
 
-from core.analysis.final_analysis import FinalAnalysis
-from core.types.models import (
+from agentrules.core.analysis.final_analysis import FinalAnalysis
+from agentrules.core.types.models import (
     CLAUDE_WITH_REASONING,
     O1_HIGH,
     O3_MINI_HIGH,
     ModelConfig,
 )
-from core.types.models import (
+from agentrules.core.types.models import (
     GPT4_1_DEFAULT as GPT4_1,
 )
 
@@ -62,7 +62,7 @@ async def test_live_final_analysis_configs(name: str, model_config: ModelConfig,
         pytest.skip(f"Missing {env_var} for live '{name}' test")
 
     # Override config for 'final' to exercise each model
-    import config.agents as cfg
+    import agentrules.config.agents as cfg
 
     original = cfg.MODEL_CONFIG.get("final")
     assert original is not None, "Expected 'final' preset to be preconfigured"

@@ -3,10 +3,10 @@ from typing import Any, cast
 
 import pytest
 
-from core.analysis.final_analysis import FinalAnalysis
-from core.analysis.phase_2 import Phase2Analysis
-from core.analysis.phase_3 import Phase3Analysis
-from core.analysis.phase_5 import Phase5Analysis
+from agentrules.core.analysis.final_analysis import FinalAnalysis
+from agentrules.core.analysis.phase_2 import Phase2Analysis
+from agentrules.core.analysis.phase_3 import Phase3Analysis
+from agentrules.core.analysis.phase_5 import Phase5Analysis
 from tests.utils.offline_stubs import patch_factory_offline
 
 
@@ -57,7 +57,7 @@ async def test_phase5_fallback_report_shaping(monkeypatch):
 @pytest.mark.asyncio
 async def test_final_analysis_lazy_factory_success_and_error(monkeypatch):
     # Patch factory.get_architect_for_phase to a stub
-    import core.agents.factory.factory as factory_mod
+    import agentrules.core.agents.factory.factory as factory_mod
 
     class ArchOK:
         async def final_analysis(self, consolidated_report, prompt=None):

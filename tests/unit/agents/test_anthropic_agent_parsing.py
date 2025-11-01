@@ -1,7 +1,7 @@
 import unittest
 
-from core.agents.anthropic import AnthropicArchitect
-from core.agents.anthropic import client as anthropic_client
+from agentrules.core.agents.anthropic import AnthropicArchitect
+from agentrules.core.agents.anthropic import client as anthropic_client
 from tests.fakes.vendor_responses import AnthropicMessageCreateResponseFake, _AnthropicToolUseBlock
 
 

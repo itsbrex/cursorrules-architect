@@ -1,6 +1,6 @@
 
-import core.agents.gemini as gemini_mod
-from core.agents.gemini import GeminiArchitect
+import agentrules.core.agents.gemini as gemini_mod
+from agentrules.core.agents.gemini import GeminiArchitect
 
 
 def test_gemini_analyze_client_not_initialized(monkeypatch):

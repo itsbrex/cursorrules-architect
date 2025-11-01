@@ -8,7 +8,7 @@ from collections.abc import Sequence
 from typing import Any
 from unittest.mock import patch
 
-from core.analysis.phase_1 import Phase1Analysis
+from agentrules.core.analysis.phase_1 import Phase1Analysis
 
 
 class _StaticAgent:
@@ -58,8 +58,8 @@ def _stub_architect_factory(phase: str, **kwargs: Any) -> _StaticAgent:  # pragm
 
 class Phase1ResearcherGuardrailsTests(unittest.IsolatedAsyncioTestCase):
     async def test_researcher_skipped_when_no_tools_requested(self) -> None:
-        with patch("core.analysis.phase_1.get_architect_for_phase", side_effect=_stub_architect_factory), \
-                patch("core.analysis.phase_1.get_researcher_architect", return_value=_NoToolResearcher()):
+        with patch("agentrules.core.analysis.phase_1.get_architect_for_phase", side_effect=_stub_architect_factory), \
+                patch("agentrules.core.analysis.phase_1.get_researcher_architect", return_value=_NoToolResearcher()):
             analyzer = Phase1Analysis(researcher_enabled=True)
             result = await analyzer.run([], {})
 
@@ -71,9 +71,9 @@ class Phase1ResearcherGuardrailsTests(unittest.IsolatedAsyncioTestCase):
         async def failing_tavily(query: str, depth: str, max_results: int) -> str:  # pragma: no cover - injected
             return json.dumps({"error": "service unavailable"})
 
-        with patch("core.analysis.phase_1.get_architect_for_phase", side_effect=_stub_architect_factory), \
-                patch("core.analysis.phase_1.get_researcher_architect", return_value=_FailingToolResearcher()), \
-                patch("core.analysis.phase_1._run_tavily_search", side_effect=failing_tavily):
+        with patch("agentrules.core.analysis.phase_1.get_architect_for_phase", side_effect=_stub_architect_factory), \
+                patch("agentrules.core.analysis.phase_1.get_researcher_architect", return_value=_FailingToolResearcher()), \
+                patch("agentrules.core.analysis.phase_1._run_tavily_search", side_effect=failing_tavily):
             analyzer = Phase1Analysis(researcher_enabled=True)
             result = await analyzer.run([], {})
 

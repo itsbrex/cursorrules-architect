@@ -1,6 +1,6 @@
 import unittest
 
-from core.agents.deepseek import DeepSeekArchitect
+from agentrules.core.agents.deepseek import DeepSeekArchitect
 from tests.fakes.vendor_responses import DeepSeekChatCompletionFake, _ToolCallFake
 
 
@@ -25,7 +25,7 @@ class _DeepSeekFakeClient:
 
 class DeepSeekArchitectParsingTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
-        import core.agents.deepseek as ds_mod
+        import agentrules.core.agents.deepseek as ds_mod
         self.ds_mod = ds_mod
         self.fake_client = _DeepSeekFakeClient()
 

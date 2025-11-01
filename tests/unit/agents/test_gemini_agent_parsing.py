@@ -5,8 +5,8 @@ from typing import Any
 
 from google.protobuf.struct_pb2 import Struct
 
-from core.agents.base import ReasoningMode
-from core.agents.gemini import GeminiArchitect
+from agentrules.core.agents.base import ReasoningMode
+from agentrules.core.agents.gemini import GeminiArchitect
 from tests.fakes.vendor_responses import GeminiGenerateContentResponseFake, _FunctionCallFake
 
 

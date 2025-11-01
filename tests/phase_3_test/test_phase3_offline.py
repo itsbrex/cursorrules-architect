@@ -1,7 +1,7 @@
 import unittest
 from pathlib import Path
 
-from core.utils.file_system.tree_generator import get_project_tree
+from agentrules.core.utils.file_system.tree_generator import get_project_tree
 from tests.utils.offline_stubs import patch_factory_offline
 
 
@@ -23,7 +23,7 @@ class Phase3OfflineTests(unittest.IsolatedAsyncioTestCase):
         tree = get_project_tree(Path('tests/tests_input'))
         if len(tree) >= 2 and tree[0] == '<project_structure>' and tree[-1] == '</project_structure>':
             tree = tree[1:-1]
-        from core.analysis.phase_3 import Phase3Analysis
+        from agentrules.core.analysis.phase_3 import Phase3Analysis
         p3 = Phase3Analysis()
         res = await p3.run(analysis_plan, tree, Path('tests/tests_input'))
         self.assertIn('findings', res)

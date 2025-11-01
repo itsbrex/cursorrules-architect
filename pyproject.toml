@@ -47,8 +47,8 @@ dev = [
 agentrules = "agentrules.cli:app"
 
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["agentrules*", "core*", "config*"]
+where = ["src"]
+include = ["agentrules*"]
 
 [tool.ruff]
 line-length = 120
@@ -69,14 +69,14 @@ quote-style = "double"
 indent-style = "space"
 
 [tool.ruff.lint.per-file-ignores]
-"config/prompts/__init__.py" = ["F403"]
-"config/prompts/*.py" = ["E501"]
+"src/agentrules/config/prompts/__init__.py" = ["F403"]
+"src/agentrules/config/prompts/*.py" = ["E501"]
 "tests/**" = ["E402", "E501"]
 "tests/unit/agents/test_gemini_agent_parsing.py" = ["E702"]
 
 [tool.pyright]
-include = ["agentrules", "core", "config", "main.py", "tests"]
-extraPaths = ["typings"]
+include = ["src", "tests"]
+extraPaths = ["typings", "src"]
 exclude = [
   "build",
   "dist",

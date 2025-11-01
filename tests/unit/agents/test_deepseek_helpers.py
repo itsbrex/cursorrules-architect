@@ -5,16 +5,16 @@ import unittest
 from dataclasses import dataclass
 from unittest import mock
 
-from core.agents.base import ReasoningMode
-from core.agents.deepseek.config import (
+from agentrules.core.agents.base import ReasoningMode
+from agentrules.core.agents.deepseek.config import (
     API_BASE_ENV_VAR,
     DEFAULT_BASE_URL,
     resolve_base_url,
     resolve_model_defaults,
 )
-from core.agents.deepseek.request_builder import prepare_request
-from core.agents.deepseek.response_parser import parse_response
-from core.agents.deepseek.tooling import resolve_tool_config
+from agentrules.core.agents.deepseek.request_builder import prepare_request
+from agentrules.core.agents.deepseek.response_parser import parse_response
+from agentrules.core.agents.deepseek.tooling import resolve_tool_config
 
 
 class DeepSeekConfigTests(unittest.TestCase):

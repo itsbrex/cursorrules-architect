@@ -9,7 +9,7 @@ class Phase4OfflineTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_phase4_synthesis(self):
         phase3_results = {"phase": "Deep Analysis", "findings": []}
-        from core.analysis.phase_4 import Phase4Analysis
+        from agentrules.core.analysis.phase_4 import Phase4Analysis
         p4 = Phase4Analysis()
         res = await p4.run(phase3_results)
         self.assertIn('analysis', res)

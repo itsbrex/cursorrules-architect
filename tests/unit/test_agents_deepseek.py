@@ -1,7 +1,7 @@
 import types
 from typing import Any, cast
 
-from core.agents.deepseek import DeepSeekArchitect
+from agentrules.core.agents.deepseek import DeepSeekArchitect
 
 
 class _FakeMessage:

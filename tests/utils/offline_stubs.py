@@ -11,7 +11,7 @@ import os
 from types import ModuleType
 from typing import Any, cast
 
-from core.agents.base import BaseArchitect, ModelProvider, ReasoningMode
+from agentrules.core.agents.base import BaseArchitect, ModelProvider, ReasoningMode
 
 
 class DummyArchitect(BaseArchitect):
@@ -101,9 +101,9 @@ class DummyArchitect(BaseArchitect):
 
 def patch_factory_offline() -> None:
     """Monkeypatch the architect factory functions to return DummyArchitects."""
-    import core.agents as agents_pkg
-    from config.agents import MODEL_CONFIG
-    from core.agents.factory import factory as fact
+    import agentrules.core.agents as agents_pkg
+    from agentrules.config.agents import MODEL_CONFIG
+    from agentrules.core.agents.factory import factory as fact
 
     os.environ.setdefault("OFFLINE", "1")
 
@@ -150,7 +150,7 @@ def patch_factory_offline() -> None:
         pass
     try:
         # Package-level attribute
-        from core.agents import factory as factory_pkg  # type: ignore
+        from agentrules.core.agents import factory as factory_pkg  # type: ignore
         factory_pkg.get_architect_for_phase = get_architect_for_phase_stub  # type: ignore[attr-defined]
     except Exception:
         pass
@@ -159,17 +159,17 @@ def patch_factory_offline() -> None:
     import sys
 
     for module_name in (
-        "core.analysis.phase_1",
-        "core.analysis.phase_2",
-        "core.analysis.phase_3",
-        "core.analysis.phase_4",
-        "core.analysis.phase_5",
-        "core.analysis.final_analysis",
+        "agentrules.core.analysis.phase_1",
+        "agentrules.core.analysis.phase_2",
+        "agentrules.core.analysis.phase_3",
+        "agentrules.core.analysis.phase_4",
+        "agentrules.core.analysis.phase_5",
+        "agentrules.core.analysis.final_analysis",
     ):
         module = sys.modules.get(module_name)
         if not module:
             continue
         if hasattr(module, "get_architect_for_phase"):
             module.get_architect_for_phase = get_architect_for_phase_stub  # type: ignore[attr-defined]
-        if module_name == "core.analysis.phase_1" and hasattr(module, "get_researcher_architect"):
+        if module_name == "agentrules.core.analysis.phase_1" and hasattr(module, "get_researcher_architect"):
             module.get_researcher_architect = get_researcher_architect_stub  # type: ignore[attr-defined]

@@ -1,9 +1,9 @@
-from core.agents.anthropic.request_builder import (
+from agentrules.core.agents.anthropic.request_builder import (
     DEFAULT_THINKING_BUDGET,
     PreparedRequest,
     prepare_request,
 )
-from core.agents.base import ReasoningMode
+from agentrules.core.agents.base import ReasoningMode
 
 
 def test_prepare_request_without_reasoning_skips_thinking() -> None:

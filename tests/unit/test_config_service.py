@@ -16,6 +16,7 @@ class ConfigServiceTestCase(unittest.TestCase):
         for env_var in self.config_service.PROVIDER_ENV_MAP.values():
             self._env_backup[env_var] = os.environ.pop(env_var, None)
         self._verbosity_backup = os.environ.pop(self.config_service.VERBOSITY_ENV_VAR, None)
+        self._offline_backup = os.environ.pop("OFFLINE", None)
 
     def tearDown(self) -> None:
         self.temp_dir.cleanup()
@@ -29,6 +30,10 @@ class ConfigServiceTestCase(unittest.TestCase):
             os.environ.pop(self.config_service.VERBOSITY_ENV_VAR, None)
         else:
             os.environ[self.config_service.VERBOSITY_ENV_VAR] = self._verbosity_backup
+        if self._offline_backup is None:
+            os.environ.pop("OFFLINE", None)
+        else:
+            os.environ["OFFLINE"] = self._offline_backup
 
     def test_set_provider_key_persists_and_sets_env(self) -> None:
         self.config_service.set_provider_key("openai", "test-key-123")

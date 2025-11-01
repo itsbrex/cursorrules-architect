@@ -8,14 +8,14 @@ from collections.abc import Iterator
 from typing import Any, cast
 from unittest.mock import patch
 
-from core.agents.anthropic import AnthropicArchitect
-from core.agents.base import BaseArchitect, ModelProvider, ReasoningMode
-from core.agents.deepseek import DeepSeekArchitect
-from core.agents.gemini import GeminiArchitect
-from core.agents.openai import OpenAIArchitect
-from core.agents.xai import XaiArchitect
-from core.streaming import StreamChunk, StreamEventType
-from core.utils.async_stream import iterate_in_thread
+from agentrules.core.agents.anthropic import AnthropicArchitect
+from agentrules.core.agents.base import BaseArchitect, ModelProvider, ReasoningMode
+from agentrules.core.agents.deepseek import DeepSeekArchitect
+from agentrules.core.agents.gemini import GeminiArchitect
+from agentrules.core.agents.openai import OpenAIArchitect
+from agentrules.core.agents.xai import XaiArchitect
+from agentrules.core.streaming import StreamChunk, StreamEventType
+from agentrules.core.utils.async_stream import iterate_in_thread
 
 
 async def _collect_async(iterator) -> list[StreamChunk]:

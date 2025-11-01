@@ -4,10 +4,10 @@ from pathlib import Path
 from typing import cast
 from unittest.mock import patch
 
-from core.agents.base import BaseArchitect
-from core.analysis.events import AnalysisEvent
-from core.analysis.phase_2 import Phase2Analysis
-from core.analysis.phase_3 import Phase3Analysis
+from agentrules.core.agents.base import BaseArchitect
+from agentrules.core.analysis.events import AnalysisEvent
+from agentrules.core.analysis.phase_2 import Phase2Analysis
+from agentrules.core.analysis.phase_3 import Phase3Analysis
 
 
 class _CollectingSink:
@@ -45,8 +45,8 @@ class PhaseEventTests(unittest.TestCase):
             {"id": "agent_2", "name": "Beta", "file_assignments": []},
         ]
 
-        with patch("core.analysis.phase_2.parse_agents_from_phase2", return_value=parsed_agents), patch(
-            "core.analysis.phase_2.extract_agent_fallback",
+        with patch("agentrules.core.analysis.phase_2.parse_agents_from_phase2", return_value=parsed_agents), patch(
+            "agentrules.core.analysis.phase_2.extract_agent_fallback",
             return_value=[],
         ):
             await analysis.run({}, [])
@@ -79,7 +79,7 @@ class PhaseEventTests(unittest.TestCase):
             async def analyze(self, context: dict) -> dict:  # type: ignore[no-untyped-def]
                 return {"agent": self.label, "context": context}
 
-        with patch("core.analysis.phase_3.get_architect_for_phase") as mock_factory, patch.object(
+        with patch("agentrules.core.analysis.phase_3.get_architect_for_phase") as mock_factory, patch.object(
             Phase3Analysis,
             "_get_file_contents",
             side_effect=fake_file_contents,

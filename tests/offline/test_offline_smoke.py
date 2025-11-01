@@ -1,6 +1,6 @@
 import unittest
 
-from core.agents.factory import factory
+from agentrules.core.agents.factory import factory
 from tests.utils.offline_stubs import patch_factory_offline
 
 

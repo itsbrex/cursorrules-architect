@@ -14,7 +14,7 @@ logger = logging.getLogger("debug")
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 # Import the parsing function
-from core.utils.parsers.agent_parser import extract_agent_fallback, parse_agents_from_phase2
+from agentrules.core.utils.parsers.agent_parser import extract_agent_fallback, parse_agents_from_phase2
 
 
 def print_full_content(content):

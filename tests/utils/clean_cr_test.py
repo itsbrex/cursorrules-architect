@@ -13,8 +13,8 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
-from core.utils.constants import FINAL_RULES_FILENAME
-from core.utils.formatters.clean_cursorrules import clean_cursorrules_file
+from agentrules.core.utils.constants import FINAL_RULES_FILENAME
+from agentrules.core.utils.formatters.clean_cursorrules import clean_cursorrules_file
 
 # Setup test paths
 # NOTE: keep this simple path logic aligned with the actual fixture file name.

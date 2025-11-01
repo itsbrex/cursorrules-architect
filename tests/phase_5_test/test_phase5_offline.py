@@ -14,7 +14,7 @@ class Phase5OfflineTests(unittest.IsolatedAsyncioTestCase):
             "phase3": {},
             "phase4": {"analysis": "some findings"},
         }
-        from core.analysis.phase_5 import Phase5Analysis
+        from agentrules.core.analysis.phase_5 import Phase5Analysis
         p5 = Phase5Analysis()
         res = await p5.run(all_results)
         self.assertIn('report', res)

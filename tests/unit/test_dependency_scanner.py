@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from textwrap import dedent
 
-from core.utils.dependency_scanner import collect_dependency_info
+from agentrules.core.utils.dependency_scanner import collect_dependency_info
 
 
 def _write(path: Path, content: str) -> None:

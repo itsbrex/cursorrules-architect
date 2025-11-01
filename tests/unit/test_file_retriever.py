@@ -3,7 +3,7 @@ from pathlib import Path
 from pathspec import PathSpec
 from pathspec.patterns.gitwildmatch import GitWildMatchPattern
 
-from core.utils.file_system.file_retriever import (
+from agentrules.core.utils.file_system.file_retriever import (
     get_file_contents,
     get_filtered_formatted_contents,
     list_files,

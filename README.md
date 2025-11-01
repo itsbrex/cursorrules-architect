@@ -61,7 +61,7 @@ git clone https://github.com/slyycooper/agentrules-architect.git
 cd agentrules-architect
 python -m venv .venv
 source .venv/bin/activate
-pip install -e .[dev]
+pip install -e ".[dev]"
 ```
 
 Need a one-liner? Use the helper script:

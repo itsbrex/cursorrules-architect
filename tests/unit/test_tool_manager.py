@@ -1,7 +1,7 @@
 
-from core.agent_tools.tool_manager import ToolManager
-from core.agents.base import ModelProvider
-from core.types.tool_config import Tool
+from agentrules.core.agent_tools.tool_manager import ToolManager
+from agentrules.core.agents.base import ModelProvider
+from agentrules.core.types.tool_config import Tool
 
 
 def _sample_tool() -> Tool:

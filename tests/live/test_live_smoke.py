@@ -7,7 +7,7 @@ import pytest
 @pytest.mark.asyncio
 async def test_live_final_analysis_smoke():
     # Determine which provider is configured for 'final'
-    from config.agents import MODEL_CONFIG
+    from agentrules.config.agents import MODEL_CONFIG
     model_cfg = MODEL_CONFIG.get("final")
     assert model_cfg is not None
 
@@ -24,7 +24,7 @@ async def test_live_final_analysis_smoke():
         pytest.skip(f"Missing {env_needed} for live test of provider '{provider}'")
 
     # Run a minimal final analysis
-    from core.analysis.final_analysis import FinalAnalysis
+    from agentrules.core.analysis.final_analysis import FinalAnalysis
 
     fa = FinalAnalysis()
     result = await fa.run({"report": "Quick smoke input"}, project_structure=["."])

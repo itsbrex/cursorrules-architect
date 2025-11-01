@@ -15,8 +15,8 @@ from pathlib import Path
 # Add the project root to the Python path to allow importing from the project
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from core.analysis.phase_1 import Phase1Analysis
-from core.utils.file_system.tree_generator import get_project_tree
+from agentrules.core.analysis.phase_1 import Phase1Analysis
+from agentrules.core.utils.file_system.tree_generator import get_project_tree
 from tests.utils.offline_stubs import patch_factory_offline
 
 

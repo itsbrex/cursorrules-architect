@@ -10,7 +10,7 @@ class ModelOverrideTestCase(unittest.TestCase):
         os.environ["AGENTRULES_CONFIG_DIR"] = self.temp_dir.name
 
         from agentrules import config_service, model_config
-        from config import agents as agents_module
+        from agentrules.config import agents as agents_module
 
         reload(config_service)
         reload(agents_module)

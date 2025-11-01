@@ -4,10 +4,10 @@ import unittest
 from dataclasses import dataclass
 from typing import Any
 
-from core.agents.base import ReasoningMode
-from core.agents.openai.config import resolve_model_defaults
-from core.agents.openai.request_builder import prepare_request
-from core.agents.openai.response_parser import parse_response
+from agentrules.core.agents.base import ReasoningMode
+from agentrules.core.agents.openai.config import resolve_model_defaults
+from agentrules.core.agents.openai.request_builder import prepare_request
+from agentrules.core.agents.openai.response_parser import parse_response
 
 
 class OpenAIConfigTests(unittest.TestCase):

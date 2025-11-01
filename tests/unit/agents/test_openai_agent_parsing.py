@@ -1,7 +1,7 @@
 import unittest
 from typing import Any, cast
 
-from core.agents.openai import OpenAIArchitect
+from agentrules.core.agents.openai import OpenAIArchitect
 from tests.fakes.vendor_responses import OpenAIChatCompletionFake, _ToolCallFake
 
 
@@ -29,7 +29,7 @@ class _OpenAIFakeClient:
 class OpenAIArchitectParsingTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         # Monkeypatch the package client singleton with our fake
-        from core.agents.openai import client as openai_client_mod
+        from agentrules.core.agents.openai import client as openai_client_mod
 
         self.fake_client = _OpenAIFakeClient()
         openai_client_mod._client = self.fake_client  # type: ignore[attr-defined]
