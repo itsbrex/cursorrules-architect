@@ -1,6 +1,6 @@
-# Contributing to CursorRules Architect V2
+# Contributing to AgentRules Architect v3
 
-Thank you for considering contributing to CursorRules Architect! Your help is greatly appreciated. This guide explains how you can contribute to the project.
+Thank you for considering contributing to AgentRules Architect! Your help is greatly appreciated. This guide explains how you can contribute to the project.
 
 ## Table of Contents
 
@@ -199,7 +199,7 @@ python -m unittest discover tests
 
 ### Supported Models
 
-CursorRules Architect V2 supports multiple AI models:
+AgentRules Architect v3 supports multiple AI models:
 
 - **Anthropic**:
   - `claude-haiku-4-5` (with or without thinking)
@@ -235,4 +235,3 @@ Be mindful of API usage costs when developing and testing. Consider using mock r
 If you have any questions or need assistance, feel free to open an issue or reach out to the maintainers.
 
 We look forward to your contributions!
-
