@@ -91,7 +91,7 @@ class DummyArchitect(BaseArchitect):
 
     async def final_analysis(self, consolidated_report: dict, prompt: str | None = None) -> dict:
         print("[offline] final_analysis called")
-        # Begin with "You are" so clean_cursorrules checker passes
+        # Begin with "You are" so clean_agentrules checker passes
         return {"analysis": "You are an offline final analysis assistant. Provide concise Agent rules."}
 
     async def consolidate_results(self, all_results: dict, prompt: str | None = None) -> dict:

@@ -44,7 +44,7 @@ from agentrules.core.utils.file_creation.cursorignore import create_cursorignore
 from agentrules.core.utils.file_creation.phases_output import save_phase_outputs
 from agentrules.core.utils.file_system.gitignore import load_gitignore_spec
 from agentrules.core.utils.file_system.tree_generator import get_project_tree
-from agentrules.core.utils.formatters.clean_cursorrules import clean_cursorrules
+from agentrules.core.utils.formatters.clean_agentrules import clean_agentrules
 from agentrules.core.utils.model_config_helper import get_model_config_name
 
 
@@ -464,7 +464,7 @@ class ProjectAnalyzer:
         else:
             self.console.print("[dim]Skipped .cursorignore generation (disabled in settings).[/]")
 
-        success, message = clean_cursorrules(str(self.directory), filename=rules_filename)
+        success, message = clean_agentrules(str(self.directory), filename=rules_filename)
         if success:
             self.console.print("[green]Cleaned Agent rules file: removed text before 'You are...'[/]")
         else:

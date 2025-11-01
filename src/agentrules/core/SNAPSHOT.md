@@ -108,8 +108,8 @@
     │   ├── gitignore.py       # Helper for loading and applying .gitignore patterns.
     │   └── tree_generator.py  # Generates a visual tree representation of the project structure.
     ├── formatters/            # Contains code formatting utilities.
-    │   ├── __init__.py        # Exports the clean_cursorrules function.
-    │   └── clean_cursorrules.py # Cleans the final output file to ensure it starts with the system prompt.
+    │   ├── __init__.py        # Exports the clean_agentrules function.
+    │   └── clean_agentrules.py # Cleans the final output file to ensure it starts with the system prompt.
     ├── model_config_helper.py # Helper to get the human-readable name of a model configuration.
     ├── offline.py             # Provides dummy architect classes for running the pipeline without API calls.
     └── parsers/               # Contains miscellaneous parsers.

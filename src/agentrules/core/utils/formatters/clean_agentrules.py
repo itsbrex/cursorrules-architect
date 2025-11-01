@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-core/utils/formatters/clean_cursorrules.py
+core/utils/formatters/clean_agentrules.py
 
 This module provides functionality for cleaning the generated rules file by
 removing any text before the first occurrence of "You are...".
@@ -24,11 +24,11 @@ START_PATTERN = re.compile(r'\bYou are\b', re.IGNORECASE)  # Pattern to find "Yo
 
 
 # ====================================================
-# Function: clean_cursorrules_file
+# Function: clean_agentrules_file
 # This function cleans the AGENTS.md rules file by removing any text
 # before the first occurrence of "You are..."
 # ====================================================
-def clean_cursorrules_file(file_path: str) -> tuple[bool, str]:
+def clean_agentrules_file(file_path: str) -> tuple[bool, str]:
     """
     Clean the rules file by removing any text before "You are...".
 
@@ -66,10 +66,10 @@ def clean_cursorrules_file(file_path: str) -> tuple[bool, str]:
 
 
 # ====================================================
-# Function: clean_cursorrules
+# Function: clean_agentrules
 # This function finds and cleans an AGENTS.md rules file in the specified directory
 # ====================================================
-def clean_cursorrules(directory: str | None = None, *, filename: str | None = None) -> tuple[bool, str]:
+def clean_agentrules(directory: str | None = None, *, filename: str | None = None) -> tuple[bool, str]:
     """
     Find and clean an AGENTS.md rules file in the specified directory.
 
@@ -82,8 +82,8 @@ def clean_cursorrules(directory: str | None = None, *, filename: str | None = No
     # Determine the full path for the rules file
     target_filename = filename or DEFAULT_RULES_FILENAME
     if directory:
-        cursorrules_path = os.path.join(directory, target_filename)
+        agentrules_path = os.path.join(directory, target_filename)
     else:
-        cursorrules_path = target_filename
+        agentrules_path = target_filename
 
-    return clean_cursorrules_file(cursorrules_path)
+    return clean_agentrules_file(agentrules_path)

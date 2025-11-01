@@ -172,7 +172,7 @@ This distribution ensures that each major component of the project is covered by
 <file_path>src/agentrules/core/utils/file_system/gitignore.py</file_path>
 <file_path>src/agentrules/core/utils/file_system/tree_generator.py</file_path>
 <file_path>src/agentrules/core/utils/formatters/__init__.py</file_path>
-<file_path>src/agentrules/core/utils/formatters/clean_cursorrules.py</file_path>
+<file_path>src/agentrules/core/utils/formatters/clean_agentrules.py</file_path>
 <file_path>src/agentrules/core/utils/parsers/__init__.py</file_path>
 <file_path>src/agentrules/core/utils/parsers/agent_parser.py</file_path>
 <file_path>pyproject.toml</file_path>

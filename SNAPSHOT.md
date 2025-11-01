@@ -99,7 +99,7 @@ Project layout snapshot (November 2025)
 │               │   └── tree_generator.py
 │               ├── formatters/
 │               │   ├── __init__.py
-│               │   └── clean_cursorrules.py
+│               │   └── clean_agentrules.py
 │               ├── model_config_helper.py
 │               └── offline.py
 ├── tests/                         # Unit + phase regression suites.

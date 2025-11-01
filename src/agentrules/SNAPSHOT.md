@@ -158,7 +158,7 @@
 │       │   └── tree_generator.py # Generates an ASCII tree representation of the project structure.
 │       ├── formatters/        # Utilities for formatting output files.
 │       │   ├── __init__.py    # Formatters package initializer.
-│       │   └── clean_cursorrules.py # Cleans the generated rules file to ensure correct format.
+│       │   └── clean_agentrules.py # Cleans the generated rules file to ensure correct format.
 │       ├── model_config_helper.py # Utility to get the string name of a model configuration object.
 │       ├── offline.py         # Provides dummy architects for running in offline mode.
 │       └── parsers/           # Utilities for parsing AI model outputs.
