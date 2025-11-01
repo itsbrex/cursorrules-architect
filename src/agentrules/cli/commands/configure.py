@@ -5,7 +5,7 @@ from __future__ import annotations
 import questionary
 import typer
 
-from agentrules.config_service import PROVIDER_ENV_MAP
+from agentrules.core.configuration import PROVIDER_ENV_MAP
 
 from ..bootstrap import bootstrap_runtime
 from ..services import configuration as config_service

@@ -6,11 +6,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
-from agentrules.config_service import (
-    get_effective_exclusions,
-    get_tree_max_depth,
-    should_respect_gitignore,
-)
+from agentrules.core.configuration import get_config_manager
 from agentrules.core.utils.file_system.gitignore import load_gitignore_spec
 from agentrules.core.utils.file_system.tree_generator import (
     get_project_tree,
@@ -51,18 +47,19 @@ class TreeSnapshot:
 def generate_tree_snapshot(directory: Path, *, max_depth: int | None = None) -> TreeSnapshot:
     """Build the exclusion-aware project tree for ``directory``."""
 
-    exclude_dirs, exclude_files, exclude_exts = get_effective_exclusions()
+    config_manager = get_config_manager()
+    exclude_dirs, exclude_files, exclude_exts = config_manager.get_effective_exclusions()
 
     gitignore_spec = None
     gitignore_path: Path | None = None
-    respect_gitignore = should_respect_gitignore()
+    respect_gitignore = config_manager.should_respect_gitignore()
     if respect_gitignore:
         loaded = load_gitignore_spec(directory)
         if loaded:
             gitignore_spec = loaded.spec
             gitignore_path = loaded.path
 
-    effective_depth = max_depth if max_depth is not None else get_tree_max_depth()
+    effective_depth = max_depth if max_depth is not None else config_manager.get_tree_max_depth()
 
     lines = get_project_tree(
         directory,

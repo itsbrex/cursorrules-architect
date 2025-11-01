@@ -21,6 +21,7 @@ from typing import Any  # Used for type hinting, which makes the code easier to 
 
 from pathspec import PathSpec
 
+from agentrules.core.configuration import get_config_manager
 from agentrules.core.utils.constants import DEFAULT_RULES_FILENAME
 
 # ====================================================
@@ -140,9 +141,7 @@ def save_phase_outputs(
 
     # Generate a tree with our custom exclusions
     if tree_max_depth is None:
-        from agentrules.config_service import get_tree_max_depth  # Lazy import to avoid cycles
-
-        tree_max_depth = get_tree_max_depth()
+        tree_max_depth = get_config_manager().get_tree_max_depth()
 
     tree = generate_tree(
         directory,

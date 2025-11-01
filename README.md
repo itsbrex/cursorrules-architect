@@ -117,9 +117,9 @@ agentrules keys
   - `outputs` – `generate_cursorignore`, `generate_phase_outputs`, `rules_filename`.
   - `features` – `researcher_mode` (`auto`/`on`/`off`) to control Phase 1 web research (managed from the Researcher row in the models wizard).
   - `exclusions` – add/remove directories, files, or extensions; choose to respect `.gitignore`.
-- **Runtime helpers** (from `agentrules/config_service.py`):
-  - `get_effective_exclusions()` resolves overrides with defaults from `config/exclusions.py`.
-  - `should_generate_phase_outputs()` and friends toggle output writers in `core/utils/file_creation`.
+- **Runtime helpers** (via `agentrules/core/configuration/manager.py`):
+  - `ConfigManager.get_effective_exclusions()` resolves overrides with defaults from `config/exclusions.py`.
+  - `ConfigManager.should_generate_phase_outputs()` and related methods toggle output writers in `core/utils/file_creation`.
 - **Environment variables**:
   - `AGENTRULES_CONFIG_DIR` – alternate config root.
   - `AGENTRULES_LOG_LEVEL` – overrides persisted verbosity.

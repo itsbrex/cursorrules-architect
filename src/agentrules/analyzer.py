@@ -20,16 +20,6 @@ from rich.console import Console
 
 from agentrules.cli.ui.analysis_view import AnalysisView
 from agentrules.config.agents import MODEL_CONFIG
-from agentrules.config_service import (
-    get_effective_exclusions,
-    get_exclusion_overrides,
-    get_rules_filename,
-    get_tree_max_depth,
-    is_researcher_enabled,
-    should_generate_cursorignore,
-    should_generate_phase_outputs,
-    should_respect_gitignore,
-)
 from agentrules.core.analysis import (
     FinalAnalysis,
     Phase1Analysis,
@@ -39,6 +29,7 @@ from agentrules.core.analysis import (
     Phase5Analysis,
 )
 from agentrules.core.analysis.events import AnalysisEvent, AnalysisEventSink
+from agentrules.core.configuration import get_config_manager
 from agentrules.core.utils.dependency_scanner import collect_dependency_info
 from agentrules.core.utils.file_creation.cursorignore import create_cursorignore
 from agentrules.core.utils.file_creation.phases_output import save_phase_outputs
@@ -46,6 +37,8 @@ from agentrules.core.utils.file_system.gitignore import load_gitignore_spec
 from agentrules.core.utils.file_system.tree_generator import get_project_tree
 from agentrules.core.utils.formatters.clean_agentrules import clean_agentrules
 from agentrules.core.utils.model_config_helper import get_model_config_name
+
+CONFIG_MANAGER = get_config_manager()
 
 
 class _ViewEventSink(AnalysisEventSink):
@@ -182,9 +175,10 @@ class ProjectAnalyzer:
         self.gitignore_spec: PathSpec | None = None
         self.gitignore_path: Path | None = None
         self.respect_gitignore: bool = True
-        self.tree_max_depth: int = get_tree_max_depth()
+        self.tree_max_depth: int = CONFIG_MANAGER.get_tree_max_depth()
 
-        self.phase1_analyzer = Phase1Analysis(researcher_enabled=is_researcher_enabled())
+        researcher_enabled = CONFIG_MANAGER.is_researcher_enabled()
+        self.phase1_analyzer = Phase1Analysis(researcher_enabled=researcher_enabled)
         self.phase2_analyzer = Phase2Analysis()
         self.phase3_analyzer = Phase3Analysis()
         self.phase4_analyzer = Phase4Analysis()
@@ -225,11 +219,12 @@ class ProjectAnalyzer:
         event_sink = _ViewEventSink(view)
         self._apply_event_sink(event_sink)
 
-        self.exclusion_overrides = get_exclusion_overrides()
-        exclude_dirs, exclude_files, exclude_exts = get_effective_exclusions()
+        config_manager = CONFIG_MANAGER
+        self.exclusion_overrides = config_manager.get_exclusion_overrides()
+        exclude_dirs, exclude_files, exclude_exts = config_manager.get_effective_exclusions()
         self.effective_exclusions = (exclude_dirs, exclude_files, exclude_exts)
-        self.respect_gitignore = should_respect_gitignore()
-        self.tree_max_depth = get_tree_max_depth()
+        self.respect_gitignore = config_manager.should_respect_gitignore()
+        self.tree_max_depth = config_manager.get_tree_max_depth()
         self.gitignore_spec = None
         self.gitignore_path = None
         if self.respect_gitignore:
@@ -253,7 +248,7 @@ class ProjectAnalyzer:
             gitignore_spec=self.gitignore_spec,
         )
 
-        researcher_active = is_researcher_enabled()
+        researcher_active = config_manager.is_researcher_enabled()
         subtitle = "Assessing dependencies, research gaps, structure, and tech stack"
         view.render_phase_header(
             "Phase 1 · Initial Discovery",
@@ -411,8 +406,9 @@ class ProjectAnalyzer:
             "metrics": {"time": time.time() - metrics_start_time},
         }
 
-        rules_filename = get_rules_filename()
-        include_phase_outputs = should_generate_phase_outputs()
+        config_manager = CONFIG_MANAGER
+        rules_filename = config_manager.get_rules_filename()
+        include_phase_outputs = config_manager.should_generate_phase_outputs()
 
         exclusion_summary = None
         overrides = self.exclusion_overrides
@@ -455,7 +451,7 @@ class ProjectAnalyzer:
             tree_max_depth=self.tree_max_depth,
         )
 
-        if should_generate_cursorignore():
+        if config_manager.should_generate_cursorignore():
             success, message = create_cursorignore(str(self.directory))
             if success:
                 self.console.print(f"[green]{message}[/]")

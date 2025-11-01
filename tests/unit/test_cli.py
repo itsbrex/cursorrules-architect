@@ -12,20 +12,34 @@ class CLITestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.temp_dir = tempfile.TemporaryDirectory()
         os.environ["AGENTRULES_CONFIG_DIR"] = self.temp_dir.name
-        from agentrules import config_service, model_config
+
+        import agentrules.core.configuration as configuration_package
+        import agentrules.core.configuration.constants as configuration_constants
+        import agentrules.core.configuration.manager as configuration_manager_module
+        import agentrules.core.configuration.repository as configuration_repository
+        from agentrules import model_config
         from agentrules.config import agents as agents_module
 
-        reload(config_service)
+        reload(configuration_constants)
+        reload(configuration_repository)
+        reload(configuration_manager_module)
+        reload(configuration_package)
+        configuration_package.get_config_manager.cache_clear()
+
         reload(agents_module)
         reload(model_config)
 
-        self.config_service = config_service
+        self.config_manager = configuration_package.get_config_manager()
         self.model_config = model_config
         self.agents_module = agents_module
 
     def tearDown(self) -> None:
         if hasattr(self, "model_config"):
             self.model_config.apply_user_overrides({})
+        if hasattr(self, "config_manager"):
+            from agentrules.core.configuration import get_config_manager
+
+            get_config_manager.cache_clear()
         self.temp_dir.cleanup()
         os.environ.pop("AGENTRULES_CONFIG_DIR", None)
 

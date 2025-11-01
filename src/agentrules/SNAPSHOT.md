@@ -48,7 +48,6 @@
 │   │   ├── phase_4_prompts.py # Prompt template for Phase 4 (Synthesis).
 │   │   └── phase_5_prompts.py # Prompt template for Phase 5 (Consolidation).
 │   └── tools.py               # Defines tool configurations for use by AI agents.
-├── config_service.py          # Manages loading and saving of user configurations (API keys, settings).
 ├── core/                      # Contains the core application logic for analysis and agent interaction.
 │   ├── __init__.py            # Core package initializer.
 │   ├── agent_tools/           # Tools that AI agents can use, such as web search.
@@ -115,6 +114,23 @@
 │   │   ├── phase_3.py         # Implements the logic for Phase 3 (Deep Analysis).
 │   │   ├── phase_4.py         # Implements the logic for Phase 4 (Synthesis).
 │   │   └── phase_5.py         # Implements the logic for Phase 5 (Consolidation).
+│   ├── configuration/         # Runtime configuration package used by CLI and analyzer flows.
+│   │   ├── __init__.py        # Exposes ConfigManager singleton and shared constants.
+│   │   ├── constants.py       # Paths, env var names, and other config constants.
+│   │   ├── environment.py     # Applies persisted settings to process environment/logging.
+│   │   ├── manager.py         # Facade coordinating repositories, services, and environment.
+│   │   ├── models.py          # Dataclasses representing persisted CLI configuration.
+│   │   ├── repository.py      # TOML-backed persistence adapter for configuration.
+│   │   ├── serde.py           # Conversion helpers between dataclasses and dict payloads.
+│   │   ├── utils.py           # Coercion/validation helpers shared across services.
+│   │   └── services/          # Domain-specific helpers for providers, outputs, exclusions, etc.
+│   │       ├── __init__.py
+│   │       ├── exclusions.py
+│   │       ├── features.py
+│   │       ├── logging.py
+│   │       ├── outputs.py
+│   │       ├── phase_models.py
+│   │       └── providers.py
 │   ├── streaming.py           # Defines common data structures for model response streaming.
 │   ├── types/                 # Contains shared data type definitions.
 │   │   ├── __init__.py        # Exports core type definitions.

@@ -8,10 +8,12 @@ from dotenv import load_dotenv
 from rich.console import Console
 
 from agentrules import model_config
-from agentrules.config_service import apply_config_to_environment, resolve_log_level
+from agentrules.core.configuration import get_config_manager
 from agentrules.logging_setup import configure_logging
 
 from .context import CliContext
+
+CONFIG_MANAGER = get_config_manager()
 
 
 def _load_env_files() -> None:
@@ -23,9 +25,9 @@ def _load_env_files() -> None:
 def bootstrap_runtime() -> CliContext:
     """Configure logging, load configuration, and return a CLI context."""
 
-    log_level = resolve_log_level()
+    log_level = CONFIG_MANAGER.resolve_log_level()
     configure_logging(level=log_level)
-    apply_config_to_environment()
+    CONFIG_MANAGER.apply_config_to_environment()
     _load_env_files()
     model_config.apply_user_overrides()
 

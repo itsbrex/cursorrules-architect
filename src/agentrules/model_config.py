@@ -10,12 +10,8 @@ from dataclasses import dataclass
 
 from agentrules.config import agents as agent_settings
 from agentrules.config.agents import PresetDefinition
-from agentrules.config_service import (
-    PROVIDER_ENV_MAP,
-    get_current_provider_keys,
-    get_model_overrides,
-)
 from agentrules.core.agents.base import ModelProvider
+from agentrules.core.configuration import PROVIDER_ENV_MAP, get_config_manager
 
 PHASE_TITLES: dict[str, str] = {
     "phase1": "Phase 1 – Initial Discovery",
@@ -62,6 +58,8 @@ def _build_preset_infos(
 
 PRESET_INFOS: dict[str, PresetInfo] = _build_preset_infos(agent_settings.MODEL_PRESETS.items())
 
+CONFIG_MANAGER = get_config_manager()
+
 
 def get_phase_title(phase: str) -> str:
     return PHASE_TITLES.get(phase, phase.title())
@@ -79,7 +77,7 @@ def get_available_presets_for_phase(
     phase: str,
     provider_keys: Mapping[str, str | None] | None = None,
 ) -> list[PresetInfo]:
-    provider_keys = provider_keys or get_current_provider_keys()
+    provider_keys = provider_keys or CONFIG_MANAGER.get_current_provider_keys()
     default_key = get_default_preset_key(phase)
     available: list[PresetInfo] = []
 
@@ -98,7 +96,7 @@ def get_available_presets_for_phase(
 
 
 def get_active_presets(overrides: Mapping[str, str] | None = None) -> dict[str, str]:
-    overrides = overrides or get_model_overrides()
+    overrides = overrides or CONFIG_MANAGER.get_model_overrides()
     active: dict[str, str] = {}
     for phase in PHASE_SEQUENCE:
         override = overrides.get(phase)
@@ -117,7 +115,7 @@ def apply_user_overrides(overrides: Mapping[str, str] | None = None) -> dict[str
     Apply user-selected model presets to the global MODEL_CONFIG.
     Returns the applied preset mapping for further inspection.
     """
-    overrides = overrides or get_model_overrides()
+    overrides = overrides or CONFIG_MANAGER.get_model_overrides()
     applied: dict[str, str] = {}
 
     # reset to defaults first

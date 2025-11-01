@@ -6,50 +6,9 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 
 from agentrules import model_config
-from agentrules.config_service import (
-    PROVIDER_ENV_MAP,
-    OutputPreferences,
-    add_exclusion_entry,
-    get_current_provider_keys,
-    get_effective_exclusions,
-    get_exclusion_overrides,
-    get_logging_verbosity,
-    get_rules_filename,
-    get_tree_max_depth,
-    remove_exclusion_entry,
-    reset_exclusions,
-    reset_tree_max_depth,
-    set_generate_cursorignore,
-    set_generate_phase_outputs,
-    set_logging_verbosity,
-    set_phase_model,
-    set_provider_key,
-    set_respect_gitignore,
-    set_rules_filename,
-    set_tree_max_depth,
-    should_respect_gitignore,
-)
-from agentrules.config_service import (
-    get_output_preferences as load_output_preferences,
-)
-from agentrules.config_service import (
-    get_researcher_mode as load_researcher_mode,
-)
-from agentrules.config_service import (
-    has_tavily_credentials as _has_tavily_credentials,
-)
-from agentrules.config_service import (
-    is_researcher_enabled as _is_researcher_enabled,
-)
-from agentrules.config_service import (
-    set_researcher_mode as persist_researcher_mode,
-)
-from agentrules.config_service import (
-    should_generate_cursorignore as is_cursorignore_enabled,
-)
-from agentrules.config_service import (
-    should_generate_phase_outputs as is_phase_outputs_enabled,
-)
+from agentrules.core.configuration import PROVIDER_ENV_MAP, OutputPreferences, get_config_manager
+
+CONFIG_MANAGER = get_config_manager()
 
 
 @dataclass(frozen=True)
@@ -62,7 +21,7 @@ class ProviderState:
 
 
 def list_provider_states() -> list[ProviderState]:
-    keys = get_current_provider_keys()
+    keys = CONFIG_MANAGER.get_current_provider_keys()
     return [
         ProviderState(name=provider, env_var=env_var, api_key=keys.get(provider))
         for provider, env_var in PROVIDER_ENV_MAP.items()
@@ -70,12 +29,12 @@ def list_provider_states() -> list[ProviderState]:
 
 
 def save_provider_key(provider: str, api_key: str | None) -> None:
-    set_provider_key(provider, api_key)
+    CONFIG_MANAGER.set_provider_key(provider, api_key)
     model_config.apply_user_overrides()
 
 
 def get_provider_keys() -> dict[str, str | None]:
-    return get_current_provider_keys()
+    return CONFIG_MANAGER.get_current_provider_keys()
 
 
 def get_active_presets(overrides: Mapping[str, str] | None = None) -> dict[str, str]:
@@ -90,23 +49,23 @@ def get_available_presets_for_phase(
 
 
 def save_phase_model(phase: str, preset_key: str | None) -> None:
-    set_phase_model(phase, preset_key)
+    CONFIG_MANAGER.set_phase_model(phase, preset_key)
 
 
 def get_researcher_mode() -> str:
-    return load_researcher_mode()
+    return CONFIG_MANAGER.get_researcher_mode()
 
 
 def save_researcher_mode(mode: str | None) -> None:
-    persist_researcher_mode(mode)
+    CONFIG_MANAGER.set_researcher_mode(mode)
 
 
 def has_tavily_credentials() -> bool:
-    return _has_tavily_credentials()
+    return CONFIG_MANAGER.has_tavily_credentials()
 
 
 def is_researcher_active() -> bool:
-    return _is_researcher_enabled()
+    return CONFIG_MANAGER.is_researcher_enabled()
 
 
 def apply_model_overrides(overrides: Mapping[str, str] | None = None) -> dict[str, str]:
@@ -114,44 +73,44 @@ def apply_model_overrides(overrides: Mapping[str, str] | None = None) -> dict[st
 
 
 def get_logging_preference() -> str | None:
-    return get_logging_verbosity()
+    return CONFIG_MANAGER.get_logging_verbosity()
 
 
 def save_logging_preference(value: str | None) -> None:
-    set_logging_verbosity(value)
+    CONFIG_MANAGER.set_logging_verbosity(value)
 
 
 def get_output_preferences() -> OutputPreferences:
-    return load_output_preferences()
+    return CONFIG_MANAGER.get_output_preferences()
 
 
 def save_generate_cursorignore_preference(enabled: bool) -> None:
-    set_generate_cursorignore(enabled)
+    CONFIG_MANAGER.set_generate_cursorignore(enabled)
 
 
 def is_cursorignore_generation_enabled() -> bool:
-    return is_cursorignore_enabled()
+    return CONFIG_MANAGER.should_generate_cursorignore()
 
 
 def save_generate_phase_outputs_preference(enabled: bool) -> None:
-    set_generate_phase_outputs(enabled)
+    CONFIG_MANAGER.set_generate_phase_outputs(enabled)
 
 
 def are_phase_outputs_enabled() -> bool:
-    return is_phase_outputs_enabled()
+    return CONFIG_MANAGER.should_generate_phase_outputs()
 
 
 def get_rules_file_name() -> str:
-    return get_rules_filename()
+    return CONFIG_MANAGER.get_rules_filename()
 
 
 def save_rules_file_name(name: str) -> None:
-    set_rules_filename(name)
+    CONFIG_MANAGER.set_rules_filename(name)
 
 
 def get_exclusion_settings():
-    overrides = get_exclusion_overrides()
-    effective_dirs, effective_files, effective_exts = get_effective_exclusions()
+    overrides = CONFIG_MANAGER.get_exclusion_overrides()
+    effective_dirs, effective_files, effective_exts = CONFIG_MANAGER.get_effective_exclusions()
     return {
         "overrides": overrides,
         "effective": {
@@ -163,32 +122,32 @@ def get_exclusion_settings():
 
 
 def add_custom_exclusion(kind: str, value: str) -> str | None:
-    return add_exclusion_entry(kind, value)
+    return CONFIG_MANAGER.add_exclusion_entry(kind, value)
 
 
 def remove_custom_exclusion(kind: str, value: str) -> str | None:
-    return remove_exclusion_entry(kind, value)
+    return CONFIG_MANAGER.remove_exclusion_entry(kind, value)
 
 
 def reset_custom_exclusions() -> None:
-    reset_exclusions()
+    CONFIG_MANAGER.reset_exclusions()
 
 
 def save_respect_gitignore(enabled: bool) -> None:
-    set_respect_gitignore(enabled)
+    CONFIG_MANAGER.set_respect_gitignore(enabled)
 
 
 def is_gitignore_respected() -> bool:
-    return should_respect_gitignore()
+    return CONFIG_MANAGER.should_respect_gitignore()
 
 
 def get_tree_traversal_depth() -> int:
-    return get_tree_max_depth()
+    return CONFIG_MANAGER.get_tree_max_depth()
 
 
 def save_tree_traversal_depth(value: int | None) -> None:
-    set_tree_max_depth(value)
+    CONFIG_MANAGER.set_tree_max_depth(value)
 
 
 def reset_tree_traversal_depth() -> None:
-    reset_tree_max_depth()
+    CONFIG_MANAGER.reset_tree_max_depth()
