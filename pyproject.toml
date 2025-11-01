@@ -92,4 +92,4 @@ reportMissingImports = "error"
 reportMissingTypeStubs = "warning"
 disableBytesTypePromotions = true
 venvPath = "."
-venv = "venv_agentrules"
+venv = ".venv"

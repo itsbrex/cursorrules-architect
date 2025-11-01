@@ -51,17 +51,21 @@ def parse_generate_response(response: Any) -> GeminiParsedResponse:
     """Extract text content and function calls from a Gemini response object."""
     payload = GeminiParsedResponse()
 
-    # Try direct text attribute first (newer SDKs expose this).
-    payload.findings = getattr(response, "text", None)
+    candidate_parts = _collect_candidate_parts(response)
 
-    if not payload.findings:
-        for part in _collect_candidate_parts(response):
-            part_text = getattr(part, "text", None)
-            if part_text:
-                payload.findings = part_text
-                break
+    text_segments: list[str] = []
+    for part in candidate_parts:
+        part_text = getattr(part, "text", None)
+        is_thought = bool(getattr(part, "thought", False))
+        if part_text and not is_thought:
+            text_segments.append(part_text)
 
-    for part in _collect_candidate_parts(response):
+    if text_segments:
+        payload.findings = "".join(text_segments)
+    elif not candidate_parts:
+        payload.findings = getattr(response, "text", None)
+
+    for part in candidate_parts:
         function_call = getattr(part, "function_call", None)
         if function_call is None:
             continue

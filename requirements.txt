@@ -10,4 +10,4 @@ typer
 questionary
 platformdirs
 tomli
-tomli-w
+tomli_w

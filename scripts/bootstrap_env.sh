@@ -3,7 +3,7 @@
 set -euo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-ENV_NAME="venv_agentrules"
+ENV_NAME=".venv"
 ENV_PATH="${PROJECT_ROOT}/${ENV_NAME}"
 PYTHON_BIN="${PYTHON_BIN:-python3}"
 
