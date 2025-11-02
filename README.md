@@ -18,8 +18,8 @@
 
 ## 🎥 CLI Demo
 
-<video controls src="docs/assets/media/demo.mov" width="100%">
-  Your browser does not support the video tag. You can download it [here](docs/assets/media/demo.mov).
+<video controls src="docs/assets/media/demo.mp4" width="100%">
+  Your browser does not support the video tag. You can download it [here](docs/assets/media/demo.mp4).
 </video>
 
 ## Why AgentRules Architect?
@@ -33,7 +33,6 @@ Version 3 rebrands the project from **CursorRules Architect** to **AgentRules Ar
 - 🗂️ **Persistent settings** – API keys, model presets, logging, and output preferences live in `~/.config/agentrules/config.toml` (override with `AGENTRULES_CONFIG_DIR`).
 - 🧠 **Expanded provider matrix** – presets now cover Anthropic Claude 4.5, OpenAI o3/o4/GPT‑4.1/GPT‑5, Google Gemini 2.5, DeepSeek Reasoner & Chat, and xAI Grok 4 tiers.
 - 🔌 **Unified tool management** – the new `ToolManager` adapts JSON tool schemas for each provider; Tavily web search is available to researcher agents with one toggle.
-- 🧪 **Deterministic offline mode** – `agentrules analyze --offline` (or `OFFLINE=1`) swaps in dummy architects and stubbed Tavily responses for CI and local smoke tests.
 - ✅ **Test & quality backbone** – 200+ unit/integration tests, Pyright, Ruff, and offline stubs provide confidence without hitting live APIs.
 
 ## ✨ Feature Overview
@@ -93,7 +92,7 @@ Need a one-liner? Use the helper script:
 
 ```bash
 agentrules --version
-agentrules analyze --offline tests/tests_input
+agentrules analyze /path/to/project
 ```
 
 Prefer module execution during development? Invoke the CLI with Python’s module flag—the package ships a `__main__` entry point:
@@ -129,7 +128,6 @@ agentrules keys
 
 - `agentrules` – interactive main menu (analyze, configure models/outputs, check keys).
 - `agentrules analyze /path/to/project` – full six-phase analysis.
-  - `--offline` switches to deterministic dummy providers (also enabled via `OFFLINE=1`).
 - `agentrules configure --models` – assign presets per phase with guided prompts; the Phase 1 → Researcher entry lets you toggle the agent On/Off once a Tavily key is configured.
 - `agentrules configure --outputs` – toggle `.cursorignore`, `phases_output/`, and custom rules filename.
 - `agentrules configure --logging` – set verbosity (`quiet`, `standard`, `verbose`) or export via `AGENTRULES_LOG_LEVEL`.
@@ -186,14 +184,14 @@ Adjust presets through the CLI (`agentrules configure --models`) or by editing `
 
 - `core/agent_tools/tool_manager.py` normalizes JSON tool schemas for each provider.
 - `config/tools.py` exposes `TOOL_SETS` and a `with_tools_enabled` helper for models that accept function/tool calls.
-- Tavily search (`tavily_web_search`) ships as the default researcher tool. Add `TAVILY_API_KEY` in the provider settings to automatically enable the Researcher agent, then pick the model (or flip it back `Off`) from the models wizard’s Researcher entry. When disabled—or when no key is present—documentation research is skipped; offline runs still exercise the researcher stub for smoke coverage. The dependency agent automatically downgrades from “knowledge gaps” mode to its legacy full catalog so downstream agents still receive usable dependency data when research is unavailable.
+- Tavily search (`tavily_web_search`) ships as the default researcher tool. Add `TAVILY_API_KEY` in the provider settings to automatically enable the Researcher agent, then pick the model (or flip it back `Off`) from the models wizard’s Researcher entry. When disabled—or when no key is present—documentation research is skipped; our contributor smoke tests use deterministic stubs to keep CI free of external calls. The dependency agent automatically downgrades from “knowledge gaps” mode to its legacy full catalog so downstream agents still receive usable dependency data when research is unavailable.
 
 ## 🧱 Project Architecture
 
 - `agentrules/` – Typer CLI, interactive Questionary flows, Rich UI, configuration services, and pipeline runner (`agentrules/SNAPSHOT.md`).
 - `core/` – provider-specific architects (`core/agents`), analysis phases (`core/analysis`), tool adapters (`core/agent_tools`), streaming primitives, and filesystem utilities (`core/SNAPSHOT.md`).
 - `config/` – preset definitions, exclusions, prompts, and tool bindings (`config/SNAPSHOT.md`).
-- `tests/` – live/offline smoke tests, phase-specific suites, provider fixtures, and unit coverage for helpers and stubs.
+- `tests/` – live smoke tests, deterministic offline stubs for CI, provider fixtures, and unit coverage for helpers and phases.
 - `pyproject.toml` – package metadata, scripts, Ruff/Pyright config, and dependency declarations.
 
 ## 🧾 Output Artifacts
@@ -213,6 +211,7 @@ Toggle outputs with `agentrules configure --outputs` or via the config TOML.
 - Format & lint: `ruff format . && ruff check .`
 - Static typing: `pyright`
 - Run targeted tests: `python tests/phase_3_test/run_test.py`
+- Deterministic smoke runs (CI/local without API calls): `agentrules analyze --offline tests/tests_input`
 - Full suite: `python -m unittest discover tests -v`
 - Keep docs and presets in sync when adding providers (`config/agents.py`, `config/tools.py`, `core/agents/*`).
 
