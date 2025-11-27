@@ -38,7 +38,7 @@ To get started with development, you'll need to set up your local environment.
 - Python 3.8 or higher
 - API keys for at least one of the following providers:
   - OpenAI API key with access to `o3`, `o4-mini`, or `gpt-4.1`
-  - Anthropic API key with access to at least one Claude 4 model (e.g., `claude-sonnet-4-5`, `claude-haiku-4-5`, or `claude-opus-4-1`)
+  - Anthropic API key with access to at least one Claude 4 model (e.g., `claude-sonnet-4-5`, `claude-haiku-4-5`, `claude-opus-4-5-20251101`; `claude-opus-4-1` still works for legacy configs)
   - DeepSeek API key with access to DeepSeek Reasoner
 - Git
 
@@ -204,7 +204,8 @@ AgentRules Architect v3 supports multiple AI models:
 - **Anthropic**:
   - `claude-haiku-4-5` (with or without thinking)
   - `claude-sonnet-4-5` (with or without thinking)
-  - `claude-opus-4-1` (with or without thinking)
+  - `claude-opus-4-5-20251101` (with or without thinking)
+  - `claude-opus-4-1` (with or without thinking; legacy)
 
 - **OpenAI**:
   - `o3` (with low/medium/high reasoning)

@@ -59,7 +59,7 @@ The pipeline captures metrics (elapsed time, agent counts) and hands them to the
 
 - Python **3.11.9+** (matches Pyright target and packaged metadata).
 - API key(s) for at least one provider:
-  - Anthropic (`claude-haiku-4.5`, `claude-sonnet-4.5`, `claude-opus-4.1`, …)
+  - Anthropic (`claude-haiku-4.5`, `claude-sonnet-4.5`, `claude-opus-4-5-20251101`; `claude-opus-4-1` remains supported for legacy configs)
   - OpenAI (`o3`, `o4-mini`, `gpt-4.1`, `gpt-5`, `gpt-5.1`, `gpt-5.1-codex`)
   - DeepSeek (`deepseek-reasoner`, `deepseek-chat`)
   - Google (`gemini-3-pro-preview`, `gemini-2.5-flash`, `gemini-2.5-pro`)

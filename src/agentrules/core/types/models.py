@@ -71,6 +71,20 @@ CLAUDE_OPUS_WITH_REASONING = ModelConfig(
     tools_config={"enabled": False, "tools": None}
 )
 
+CLAUDE_OPUS_45 = ModelConfig(
+    provider=ModelProvider.ANTHROPIC,
+    model_name="claude-opus-4-5-20251101",
+    reasoning=ReasoningMode.DISABLED,
+    tools_config={"enabled": False, "tools": None}
+)
+
+CLAUDE_OPUS_45_WITH_REASONING = ModelConfig(
+    provider=ModelProvider.ANTHROPIC,
+    model_name="claude-opus-4-5-20251101",
+    reasoning=ReasoningMode.ENABLED,
+    tools_config={"enabled": False, "tools": None}
+)
+
 # The `CLAUDE_WITH_TOOLS` example is replaced by the factory function below
 # to create a more flexible, provider-agnostic "Researcher" configuration.
 
