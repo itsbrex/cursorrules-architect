@@ -25,7 +25,7 @@ dependencies = [
   "google-genai>=1.51.0",
   "protobuf>=4.25",
   "python-dotenv",
-  "tavily-python",
+  "tavily-python>=0.7.14",
   "typer>=0.12",
   "questionary>=2.0",
   "platformdirs>=4.0",

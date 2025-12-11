@@ -205,6 +205,7 @@ By default the pipeline produces:
 - `AGENTS.md` (or your custom rules filename) – cleaned, standardized agent instructions.
 - `.cursorignore` – generated when enabled to keep editor agents focused on relevant files.
 - `phases_output/` – per-phase markdown/JSON snapshots for auditing and downstream automation.
+- Want a concrete sample? See `docs/examples/phases_output/` for a full run’s phase artifacts.
 - Rich console logs summarizing model usage, timing, and file counts.
 
 Toggle outputs with `agentrules configure --outputs` or via the config TOML.

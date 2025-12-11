@@ -111,12 +111,22 @@ def _estimate_gemini(model_name: str, payload: dict[str, Any], client: Any | Non
     try:
         contents = payload.get("contents") or payload.get("input") or payload.get("messages")
         config = payload.get("config")
+        count_config = None
+        if config is not None:
+            try:
+                from google.genai import types as genai_types  # type: ignore
+                count_tokens_cls = getattr(genai_types, "CountTokensConfig", None)
+                if count_tokens_cls and isinstance(config, count_tokens_cls):
+                    count_config = config
+            except Exception:
+                # If we cannot import or match, fall back to no config to avoid warnings.
+                count_config = None
         if client is None:
             from agentrules.core.agents.gemini.client import build_gemini_client  # lazy import
 
             client, _ = build_gemini_client(None)
 
-        response = client.models.count_tokens(model=model_name, contents=contents, config=config)  # type: ignore[arg-type]
+        response = client.models.count_tokens(model=model_name, contents=contents, config=count_config)  # type: ignore[arg-type]
         tokens = (
             getattr(response, "total_tokens", None)
             or getattr(response, "input_tokens", None)

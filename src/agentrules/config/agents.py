@@ -340,13 +340,13 @@ MODEL_PRESETS: dict[str, PresetDefinition] = {
 }
 
 MODEL_PRESET_DEFAULTS: dict[str, str] = {
-    "phase1": "gemini-flash",
-    "phase2": "gemini-flash",
-    "phase3": "gemini-flash",
-    "phase4": "gemini-flash",
-    "phase5": "gemini-flash",
-    "final": "gemini-flash",
-    "researcher": "gemini-flash",
+    "phase1": "gpt5-mini",
+    "phase2": "gpt5-mini",
+    "phase3": "gpt5-mini",
+    "phase4": "gpt5-mini",
+    "phase5": "gpt5-mini",
+    "final": "gpt5-mini",
+    "researcher": "gpt5-mini",
 }
 
 
