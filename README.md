@@ -3,7 +3,7 @@
 <div align="center">
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
-[![OpenAI](https://img.shields.io/badge/OpenAI-o3%20%7C%20o4--mini%20%7C%20gpt--5%20%7C%20gpt--5.1-blue.svg)](https://openai.com/)
+[![OpenAI](https://img.shields.io/badge/OpenAI-o3%20%7C%20o4--mini%20%7C%20gpt--5%20%7C%20gpt--5.1%20%7C%20gpt--5.2-blue.svg)](https://openai.com/)
 [![Anthropic](https://img.shields.io/badge/Anthropic-claude--4.5%20family-purple.svg)](https://www.anthropic.com/)
 [![DeepSeek](https://img.shields.io/badge/DeepSeek-reasoner-red.svg)](https://deepseek.com/)
 [![Google](https://img.shields.io/badge/Google-gemini--3--pro--preview%20%7C%20gemini--2.5--flash%20%7C%20gemini--2.5--pro-green.svg)](https://ai.google.dev/)
@@ -22,14 +22,14 @@
 
 ## Why AgentRules Architect?
 
-Version 3 rebrands the project from **CursorRules Architect** to **AgentRules Architect** to match the standardized `AGENTS.md` contract used across modern AI coding agents. The rename comes with a fresh Typer-powered CLI, a persistent configuration service, broader provider support (including xAI Grok and OpenAI GPT‑5 + GPT‑5.1 presets), and a tooling layer that keeps the six-phase analysis reliably consistent yet flexibly extensible to your project's unique needs.
+Version 3 rebrands the project from **CursorRules Architect** to **AgentRules Architect** to match the standardized `AGENTS.md` contract used across modern AI coding agents. The rename comes with a fresh Typer-powered CLI, a persistent configuration service, broader provider support (including xAI Grok and OpenAI GPT‑5/5.1/5.2 presets), and a tooling layer that keeps the six-phase analysis reliably consistent yet flexibly extensible to your project's unique needs.
 
 ## 🔥 v3 Highlights
 
 - ✨ **Rebrand & packaging** – ships with console-script and `python -m agentrules` entry points when installed from source.
 - 🧭 **Typer CLI overhaul** – `agentrules` launches an interactive main menu with subcommands for `analyze`, `configure`, and `keys`.
 - 🗂️ **Persistent settings** – API keys, model presets, logging, and output preferences live in `~/.config/agentrules/config.toml` (override with `AGENTRULES_CONFIG_DIR`).
-- 🧠 **Expanded provider matrix** – presets now cover Anthropic Claude 4.5, OpenAI o3/o4/GPT‑4.1/GPT‑5/GPT‑5.1 (+ Codex), Google Gemini 3 Pro preview + 2.5 family, DeepSeek Reasoner & Chat, and xAI Grok 4 tiers.
+- 🧠 **Expanded provider matrix** – presets now cover Anthropic Claude 4.5, OpenAI o3/o4/GPT‑4.1/GPT‑5/GPT‑5.1/GPT‑5.2 (+ Codex), Google Gemini 3 Pro preview + 2.5 family, DeepSeek Reasoner & Chat, and xAI Grok 4 tiers.
 - 🔌 **Unified tool management** – the new `ToolManager` adapts JSON tool schemas for each provider; Tavily web search is available to researcher agents with one toggle.
 - ✅ **Test & quality backbone** – 200+ unit/integration tests, Pyright, Ruff, and offline stubs provide confidence without hitting live APIs.
 
@@ -60,7 +60,7 @@ The pipeline captures metrics (elapsed time, agent counts) and hands them to the
 - Python **3.11.9+** (matches Pyright target and packaged metadata).
 - API key(s) for at least one provider:
   - Anthropic (`claude-haiku-4.5`, `claude-sonnet-4.5`, `claude-opus-4-5-20251101`; `claude-opus-4-1` remains supported for legacy configs)
-  - OpenAI (`o3`, `o4-mini`, `gpt-4.1`, `gpt-5`, `gpt-5.1`, `gpt-5.1-codex`)
+  - OpenAI (`o3`, `o4-mini`, `gpt-4.1`, `gpt-5`, `gpt-5.1`, `gpt-5.1-codex`, `gpt-5.2`)
   - DeepSeek (`deepseek-reasoner`, `deepseek-chat`)
   - Google (`gemini-3-pro-preview`, `gemini-2.5-flash`, `gemini-2.5-pro`)
   - xAI (`grok-4` family)
@@ -173,7 +173,7 @@ Adjust presets through the CLI (`agentrules configure --models`) or by editing `
 Need a coding-optimized OpenAI tier? Select the `gpt-5.1-codex` preset, which uses `gpt-5.1-codex` under the hood (same Responses API interface and reasoning controls as the rest of the GPT-5.x family, but tuned on code-heavy workloads).
 Looking for a cost-aware default? The new `gpt5-mini` preset pairs high reasoning with a generous context window and lower per-token cost—ideal for Phase 3 deep dives when budgets matter.
 
-> **Preset tip:** Legacy-friendly presets stay under the `gpt5-*` keys (backed by the `gpt-5` model name) so existing `config.toml` files continue to work, while the newer GPT‑5.1 presets live under the `gpt51-*` keys. Mixing them per phase or per-agent is fully supported.
+> **Preset tip:** Legacy-friendly presets stay under the `gpt5-*` keys (backed by the `gpt-5` model name) so existing `config.toml` files continue to work, while the newer GPT‑5.1 presets live under the `gpt51-*` keys and GPT‑5.2 presets under `gpt52-*`. Mixing them per phase or per-agent is fully supported.
 
 ## 🧠 Reasoning & Advanced Configuration
 

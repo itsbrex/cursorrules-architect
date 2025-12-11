@@ -325,6 +325,34 @@ GPT5_1_CODEX = ModelConfig(
     text_verbosity="medium"
 )
 
+# GPT-5.2 configurations (Responses API)
+GPT5_2_DEFAULT = ModelConfig(
+    provider=ModelProvider.OPENAI,
+    model_name="gpt-5.2",
+    reasoning=ReasoningMode.MEDIUM,
+    temperature=None,
+    tools_config={"enabled": False, "tools": None},
+    text_verbosity="medium",
+)
+
+GPT5_2_MINIMAL = ModelConfig(
+    provider=ModelProvider.OPENAI,
+    model_name="gpt-5.2",
+    reasoning=ReasoningMode.MINIMAL,
+    temperature=None,
+    tools_config={"enabled": False, "tools": None},
+    text_verbosity="low",
+)
+
+GPT5_2_HIGH = ModelConfig(
+    provider=ModelProvider.OPENAI,
+    model_name="gpt-5.2",
+    reasoning=ReasoningMode.HIGH,
+    temperature=None,
+    tools_config={"enabled": False, "tools": None},
+    text_verbosity="high",
+)
+
 # -----------------------------------------------------------------------------
 # Backward-compatibility aliases for older test suites and integrations
 # These names map to the current model presets to avoid breaking older imports.
