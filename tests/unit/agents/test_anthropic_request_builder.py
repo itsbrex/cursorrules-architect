@@ -33,10 +33,24 @@ def test_prepare_request_with_reasoning_includes_budget() -> None:
 
 def test_prepare_request_dynamic_reasoning_passthrough() -> None:
     prepared: PreparedRequest = prepare_request(
-        model_name="claude-sonnet-4-5",
+        model_name="claude-opus-4-6",
         prompt="hello",
         reasoning=ReasoningMode.DYNAMIC,
         tools=None,
     )
 
-    assert prepared.payload["thinking"] == {"type": "dynamic"}
+    assert prepared.payload["thinking"] == {"type": "adaptive"}
+
+
+def test_prepare_request_dynamic_reasoning_unsupported_model_raises() -> None:
+    try:
+        prepare_request(
+            model_name="claude-sonnet-4-5",
+            prompt="hello",
+            reasoning=ReasoningMode.DYNAMIC,
+            tools=None,
+        )
+    except ValueError as exc:
+        assert "Adaptive thinking" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError for unsupported adaptive thinking model")

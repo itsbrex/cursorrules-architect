@@ -17,6 +17,8 @@ from agentrules.core.types.models import (
     CLAUDE_OPUS,
     CLAUDE_OPUS_45,
     CLAUDE_OPUS_45_WITH_REASONING,
+    CLAUDE_OPUS_46,
+    CLAUDE_OPUS_46_WITH_REASONING,
     CLAUDE_OPUS_WITH_REASONING,
     CLAUDE_WITH_REASONING,
     DEEPSEEK_CHAT,
@@ -200,6 +202,18 @@ MODEL_PRESETS: dict[str, PresetDefinition] = {
         config=CLAUDE_OPUS_45_WITH_REASONING,
         label="Claude Opus 4.5 (Thinking)",
         description="Opus 4.5 with extended thinking enabled for hardest tasks.",
+        provider=ModelProvider.ANTHROPIC,
+    ),
+    "claude-opus-4.6": _preset(
+        config=CLAUDE_OPUS_46,
+        label="Claude Opus 4.6",
+        description="Claude Opus 4.6 release; supports adaptive thinking and higher output limits.",
+        provider=ModelProvider.ANTHROPIC,
+    ),
+    "claude-opus-4.6-reasoning": _preset(
+        config=CLAUDE_OPUS_46_WITH_REASONING,
+        label="Claude Opus 4.6 (Adaptive Thinking)",
+        description="Opus 4.6 with adaptive thinking enabled (recommended for deep reasoning).",
         provider=ModelProvider.ANTHROPIC,
     ),
     "o3-low": _preset(

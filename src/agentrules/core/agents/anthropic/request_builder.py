@@ -36,7 +36,7 @@ def prepare_request(
         ],
     }
 
-    thinking = _build_thinking_payload(reasoning)
+    thinking = _build_thinking_payload(model_name=model_name, reasoning=reasoning)
     if thinking is not None:
         payload["thinking"] = thinking
 
@@ -46,15 +46,28 @@ def prepare_request(
     return PreparedRequest(payload=payload)
 
 
-def _build_thinking_payload(reasoning: ReasoningMode) -> dict[str, Any] | None:
+def _build_thinking_payload(*, model_name: str, reasoning: ReasoningMode) -> dict[str, Any] | None:
     if reasoning == ReasoningMode.ENABLED:
         return {"type": "enabled", "budget_tokens": DEFAULT_THINKING_BUDGET}
 
     if reasoning == ReasoningMode.DYNAMIC:
-        # Dynamic mode allows the caller to opt-in to Anthropic's adaptive thinking.
-        return {"type": "dynamic"}
+        # Claude Opus 4.6 introduced "adaptive" thinking mode. Other models do not
+        # support it; fail fast so callers get an actionable error instead of a
+        # confusing API 400.
+        if _supports_adaptive_thinking(model_name):
+            return {"type": "adaptive"}
+        raise ValueError(
+            "Adaptive thinking (ReasoningMode.DYNAMIC) is only supported for Claude Opus 4.6 "
+            "(model 'claude-opus-4-6'). Use ReasoningMode.ENABLED for fixed-budget thinking "
+            "on other Claude models."
+        )
 
     if reasoning == ReasoningMode.DISABLED:
         return None
 
     return None
+
+
+def _supports_adaptive_thinking(model_name: str) -> bool:
+    normalized = model_name.strip().lower()
+    return normalized == "claude-opus-4-6" or normalized.startswith("claude-opus-4-6-")
