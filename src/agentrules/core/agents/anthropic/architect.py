@@ -11,7 +11,7 @@ from agentrules.core.streaming import StreamChunk, StreamEventType
 from agentrules.core.utils.async_stream import iterate_in_thread
 from agentrules.core.utils.token_estimator import compute_effective_limits, estimate_tokens
 
-from .client import execute_message_request, get_client
+from .client import execute_message_request, execute_message_stream, get_client
 from .prompting import default_prompt_template, format_prompt
 from .request_builder import PreparedRequest, prepare_request
 from .response_parser import parse_response
@@ -252,13 +252,11 @@ class AnthropicArchitect(BaseArchitect):
         logger.info(f"[bold purple]Token preflight:[/bold purple] {detail}")
 
     def _stream_messages(self, prepared: PreparedRequest) -> Iterator[StreamChunk]:
-        client = get_client()
         payload = dict(prepared.payload)
-        payload["stream"] = True
         active_tool_inputs: dict[int, dict[str, Any]] = {}
 
-        with client.messages.stream(**payload) as stream:  # type: ignore[arg-type]
-            for event in stream.events():
+        with execute_message_stream(payload) as stream:  # type: ignore[arg-type]
+            for event in stream:
                 event_type = getattr(event, "type", "")
 
                 if event_type == "content_block_start":
@@ -375,7 +373,7 @@ class AnthropicArchitect(BaseArchitect):
                     continue
 
                 if event_type == "message_stop":
-                    final = stream.get_final_response()
+                    final = getattr(event, "message", None) or stream.get_final_message()
                     usage = getattr(final, "usage", None)
                     stop_reason = getattr(final, "stop_reason", None)
                     yield StreamChunk(
@@ -398,7 +396,9 @@ class AnthropicArchitect(BaseArchitect):
                 if event_type == "ping":
                     continue
 
-                yield StreamChunk(StreamEventType.SYSTEM, None, None, None, None, None, event)
+                # The SDK emits additional convenience events (e.g. "text", "thinking")
+                # alongside the raw SSE events. Ignore unhandled event types.
+                continue
 
     @staticmethod
     def _to_dict(value: Any) -> dict[str, Any] | None:
