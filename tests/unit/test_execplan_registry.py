@@ -133,6 +133,22 @@ class ExecPlanRegistryTests(unittest.TestCase):
             self.assertFalse(build.wrote_registry)
             self.assertFalse(registry_path.exists())
 
+    def test_collect_accepts_id_only_md_filename(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            execplans_dir = root / ".agent" / "exec_plans"
+
+            _write_execplan(
+                execplans_dir / "plain" / "EP-20260207-001.md",
+                plan_id="EP-20260207-001",
+                title="Plain Filename Plan",
+            )
+
+            result = collect_execplan_registry(root=root, execplans_dir=execplans_dir)
+            self.assertEqual(result.error_count, 0)
+            self.assertEqual(len(result.registry["plans"]), 1)
+            self.assertEqual(result.registry["plans"][0]["id"], "EP-20260207-001")
+
     def test_collect_reports_unknown_dependency_references(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

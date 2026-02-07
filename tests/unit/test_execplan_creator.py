@@ -88,6 +88,25 @@ class ExecPlanCreatorTests(unittest.TestCase):
             )
             self.assertEqual(second.plan_id, "EP-20260207-002")
 
+    def test_create_execplan_counts_id_only_md_filename_for_sequence(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            execplans_dir = root / ".agent" / "exec_plans"
+
+            legacy = execplans_dir / "legacy" / "EP-20260207-001.md"
+            legacy.parent.mkdir(parents=True, exist_ok=True)
+            legacy.write_text("# legacy plan\n", encoding="utf-8")
+
+            created = create_execplan(
+                root=root,
+                title="New Plan",
+                slug="new-plan",
+                date_yyyymmdd="20260207",
+                execplans_dir=execplans_dir,
+                update_registry=False,
+            )
+            self.assertEqual(created.plan_id, "EP-20260207-002")
+
     def test_create_execplan_requires_valid_slug(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
