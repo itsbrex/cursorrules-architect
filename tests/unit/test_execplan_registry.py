@@ -41,6 +41,50 @@ def _write_execplan(path: Path, *, plan_id: str, title: str, depends_on: str = "
     )
 
 
+def _write_execplan_block_lists(
+    path: Path,
+    *,
+    plan_id: str,
+    title: str,
+    depends_on_ids: tuple[str, ...] = (),
+) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if depends_on_ids:
+        depends_on_section = "depends_on:\n" + "\n".join(f"  - {plan_ref}" for plan_ref in depends_on_ids) + "\n"
+    else:
+        depends_on_section = "depends_on: []\n"
+    path.write_text(
+        (
+            "---\n"
+            f"id: {plan_id}\n"
+            f'title: "{title}"\n'
+            "status: planned\n"
+            "kind: feature\n"
+            "domain: backend\n"
+            'owner: "@codex"\n'
+            "created: 2026-02-07\n"
+            "updated: 2026-02-07\n"
+            "tags:\n"
+            "  - execplan\n"
+            "  - auth\n"
+            "touches:\n"
+            "  - cli\n"
+            "risk: low\n"
+            "breaking: false\n"
+            "migration: false\n"
+            "links:\n"
+            '  issue: ""\n'
+            '  pr: ""\n'
+            '  docs: ""\n'
+            f"{depends_on_section}"
+            "supersedes: []\n"
+            "---\n\n"
+            "# Example\n"
+        ),
+        encoding="utf-8",
+    )
+
+
 class ExecPlanRegistryTests(unittest.TestCase):
     def test_build_writes_sorted_registry_and_excludes_milestones(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -148,6 +192,32 @@ class ExecPlanRegistryTests(unittest.TestCase):
             self.assertEqual(result.error_count, 0)
             self.assertEqual(len(result.registry["plans"]), 1)
             self.assertEqual(result.registry["plans"][0]["id"], "EP-20260207-001")
+
+    def test_collect_accepts_block_style_yaml_lists(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            execplans_dir = root / ".agent" / "exec_plans"
+
+            _write_execplan(
+                execplans_dir / "base" / "EP-20260207-001_base.md",
+                plan_id="EP-20260207-001",
+                title="Base Plan",
+            )
+            _write_execplan_block_lists(
+                execplans_dir / "feature" / "EP-20260207-002_feature.md",
+                plan_id="EP-20260207-002",
+                title="Feature Plan",
+                depends_on_ids=("EP-20260207-001",),
+            )
+
+            result = collect_execplan_registry(root=root, execplans_dir=execplans_dir)
+            self.assertEqual(result.error_count, 0)
+            self.assertEqual(result.warning_count, 0)
+
+            by_id = {plan["id"]: plan for plan in result.registry["plans"]}
+            self.assertEqual(by_id["EP-20260207-002"]["tags"], ["execplan", "auth"])
+            self.assertEqual(by_id["EP-20260207-002"]["touches"], ["cli"])
+            self.assertEqual(by_id["EP-20260207-002"]["depends_on"], ["EP-20260207-001"])
 
     def test_collect_reports_unknown_dependency_references(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

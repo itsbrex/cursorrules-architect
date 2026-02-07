@@ -7,17 +7,17 @@ import os
 import re
 import tempfile
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any, Literal
+
+import yaml
 
 from agentrules.core.utils.execplan_identity import extract_execplan_id_from_filename
 from agentrules.core.utils.execplan_paths import is_execplan_archive_path, is_execplan_milestone_path
 
 FRONT_MATTER_RE = re.compile(r"\A\s*---\s*\n(.*?)\n---\s*(?:\n|$)", re.DOTALL)
 EXECPLAN_ID_RE = re.compile(r"^EP-\d{8}-\d{3}$")
-TOP_LEVEL_KEY_RE = re.compile(r"^(?P<key>[A-Za-z_][A-Za-z0-9_]*)\s*:(?P<value>.*)$")
-NESTED_KEY_RE = re.compile(r"^\s{2}(?P<key>[A-Za-z_][A-Za-z0-9_]*)\s*:(?P<value>.*)$")
 
 REQUIRED_KEYS = frozenset(
     {
@@ -162,59 +162,22 @@ def _parse_inline_list(raw: str) -> list[str]:
     return normalized
 
 
-def _parse_scalar(raw: str) -> Any:
-    value = raw.strip()
-    if value == "":
-        return ""
-    if value in {"true", "false"}:
-        return value == "true"
-    if value in {"null", "~"}:
-        return None
-    if (value.startswith("'") and value.endswith("'")) or (value.startswith('"') and value.endswith('"')):
-        return value[1:-1]
-    if value.startswith("[") and value.endswith("]"):
-        return _parse_inline_list(value)
-    if value.isdigit():
-        return int(value)
-    return value
-
-
 def _parse_front_matter(yaml_text: str) -> dict[str, Any]:
+    try:
+        loaded = yaml.safe_load(yaml_text)
+    except yaml.YAMLError as error:
+        raise ValueError(f"Invalid YAML front matter: {error}") from error
+
+    if loaded is None:
+        return {}
+    if not isinstance(loaded, dict):
+        raise ValueError("Front matter must be a YAML mapping/object.")
+
     metadata: dict[str, Any] = {}
-    nested_key: str | None = None
-
-    for raw_line in yaml_text.splitlines():
-        stripped = raw_line.strip()
-        if not stripped or stripped.startswith("#"):
-            continue
-
-        nested_match = NESTED_KEY_RE.match(raw_line)
-        if nested_match and nested_key is not None:
-            child_key = nested_match.group("key").strip()
-            child_value = _parse_scalar(nested_match.group("value"))
-            parent_value = metadata.get(nested_key)
-            if parent_value == "":
-                metadata[nested_key] = {}
-                parent_value = metadata[nested_key]
-            if not isinstance(parent_value, dict):
-                raise ValueError(f"Front matter key '{nested_key}' must be a map for nested values.")
-            parent_value[child_key] = child_value
-            continue
-
-        top_level_match = TOP_LEVEL_KEY_RE.match(stripped)
-        if top_level_match is None:
-            raise ValueError(f"Unsupported YAML line in front matter: '{raw_line}'")
-
-        key = top_level_match.group("key").strip()
-        value_text = top_level_match.group("value")
-        if value_text.strip() == "":
-            metadata[key] = ""
-            nested_key = key
-            continue
-
-        metadata[key] = _parse_scalar(value_text)
-        nested_key = None
-
+    for key, value in loaded.items():
+        if not isinstance(key, str):
+            raise ValueError(f"Front matter keys must be strings (got {type(key).__name__}).")
+        metadata[key] = value
     return metadata
 
 
@@ -251,9 +214,15 @@ def _ensure_bool_or_none(value: Any) -> bool | None:
 
 
 def _ensure_date(value: Any, *, field_name: str) -> str:
-    if not isinstance(value, str) or not value.strip():
+    if isinstance(value, datetime):
+        candidate = value.date().isoformat()
+    elif isinstance(value, date):
+        candidate = value.isoformat()
+    elif isinstance(value, str) and value.strip():
+        candidate = value.strip()
+    else:
         raise ValueError(f"Field '{field_name}' must be a YYYY-MM-DD string.")
-    candidate = value.strip()
+
     try:
         datetime.strptime(candidate, "%Y-%m-%d")
     except ValueError as error:

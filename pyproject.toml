@@ -30,6 +30,7 @@ dependencies = [
   "questionary>=2.0",
   "platformdirs>=4.0",
   "pathspec>=0.12",
+  "PyYAML>=6.0",
   "tomli; python_version < '3.11'",
   "tomli-w",
   "tiktoken>=0.7.0"

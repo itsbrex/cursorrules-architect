@@ -107,6 +107,54 @@ class ExecPlanCreatorTests(unittest.TestCase):
             )
             self.assertEqual(created.plan_id, "EP-20260207-002")
 
+    def test_create_execplan_updates_registry_with_existing_block_list_front_matter(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            execplans_dir = root / ".agent" / "exec_plans"
+            existing = execplans_dir / "legacy" / "EP-20260207-001_legacy.md"
+            existing.parent.mkdir(parents=True, exist_ok=True)
+            existing.write_text(
+                (
+                    "---\n"
+                    "id: EP-20260207-001\n"
+                    'title: "Legacy Plan"\n'
+                    "status: planned\n"
+                    "kind: feature\n"
+                    "domain: backend\n"
+                    'owner: "@codex"\n'
+                    "created: 2026-02-07\n"
+                    "updated: 2026-02-07\n"
+                    "tags:\n"
+                    "  - legacy\n"
+                    "touches:\n"
+                    "  - cli\n"
+                    "risk: low\n"
+                    "breaking: false\n"
+                    "migration: false\n"
+                    "links:\n"
+                    '  issue: ""\n'
+                    '  pr: ""\n'
+                    '  docs: ""\n'
+                    "depends_on: []\n"
+                    "supersedes: []\n"
+                    "---\n\n"
+                    "# Legacy\n"
+                ),
+                encoding="utf-8",
+            )
+
+            created = create_execplan(
+                root=root,
+                title="New Plan",
+                slug="new-plan",
+                date_yyyymmdd="20260207",
+                execplans_dir=execplans_dir,
+                update_registry=True,
+            )
+            self.assertEqual(created.plan_id, "EP-20260207-002")
+            self.assertIsNotNone(created.registry_result)
+            self.assertEqual(created.registry_result.error_count, 0)
+
     def test_create_execplan_requires_valid_slug(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
