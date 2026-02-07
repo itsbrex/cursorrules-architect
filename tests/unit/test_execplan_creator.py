@@ -1,4 +1,5 @@
 import json
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -127,6 +128,26 @@ class ExecPlanCreatorTests(unittest.TestCase):
                     execplans_dir=execplans_dir,
                     update_registry=False,
                 )
+
+    def test_create_execplan_resolves_default_paths_from_root(self) -> None:
+        with tempfile.TemporaryDirectory() as root_tmp, tempfile.TemporaryDirectory() as cwd_tmp:
+            root = Path(root_tmp).resolve()
+            cwd = Path(cwd_tmp).resolve()
+            original_cwd = Path.cwd()
+            try:
+                os.chdir(cwd)
+                result = create_execplan(
+                    root=root,
+                    title="Root Relative Defaults",
+                    date_yyyymmdd="20260207",
+                    update_registry=True,
+                )
+            finally:
+                os.chdir(original_cwd)
+
+            self.assertTrue(result.plan_path.resolve().is_relative_to(root))
+            self.assertTrue((root / ".agent" / "exec_plans" / "registry.json").exists())
+            self.assertFalse((cwd / ".agent" / "exec_plans" / "registry.json").exists())
 
 
 if __name__ == "__main__":

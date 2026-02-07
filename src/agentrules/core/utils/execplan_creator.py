@@ -83,6 +83,10 @@ def _load_execplan_template() -> Template:
     return Template(template_path.read_text(encoding="utf-8"))
 
 
+def _resolve_path(root: Path, value: Path) -> Path:
+    return value.resolve() if value.is_absolute() else (root / value).resolve()
+
+
 def create_execplan(
     *,
     root: Path,
@@ -98,6 +102,10 @@ def create_execplan(
     include_registry_timestamp: bool = False,
     fail_on_registry_warn: bool = False,
 ) -> ExecPlanCreateResult:
+    resolved_root = root.resolve()
+    resolved_execplans_dir = _resolve_path(resolved_root, execplans_dir)
+    resolved_registry_path = _resolve_path(resolved_root, registry_path)
+
     normalized_title = title.strip()
     if not normalized_title:
         raise ValueError("Title is required.")
@@ -122,14 +130,14 @@ def create_execplan(
     date_value = _validate_date_yyyymmdd(day_token)
     created_updated = date_value.strftime("%Y-%m-%d")
 
-    execplans_dir.mkdir(parents=True, exist_ok=True)
-    sequence = _next_sequence_for_date(execplans_dir, day_token)
+    resolved_execplans_dir.mkdir(parents=True, exist_ok=True)
+    sequence = _next_sequence_for_date(resolved_execplans_dir, day_token)
     if sequence > 999:
         raise ValueError(f"ExecPlan sequence overflow for {day_token}; max is 999.")
 
     plan_id = f"EP-{day_token}-{sequence:03d}"
     filename = f"{plan_id}_{chosen_slug}.md"
-    plan_path = execplans_dir / chosen_slug / filename
+    plan_path = resolved_execplans_dir / chosen_slug / filename
     plan_path.parent.mkdir(parents=True, exist_ok=True)
 
     content = _load_execplan_template().substitute(
@@ -151,9 +159,9 @@ def create_execplan(
     registry_result: RegistryBuildResult | None = None
     if update_registry:
         registry_result = build_execplan_registry(
-            root=root,
-            execplans_dir=execplans_dir,
-            output_path=registry_path,
+            root=resolved_root,
+            execplans_dir=resolved_execplans_dir,
+            output_path=resolved_registry_path,
             include_timestamp=include_registry_timestamp,
             fail_on_warn=fail_on_registry_warn,
         )

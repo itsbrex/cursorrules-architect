@@ -110,6 +110,9 @@ def register(app: typer.Typer) -> None:
         except FileExistsError as error:
             console.print(f"[red]{error}[/]")
             raise typer.Exit(2) from error
+        except OSError as error:
+            console.print(f"[red]ExecPlan creation failed due to filesystem error: {error}[/]")
+            raise typer.Exit(2) from error
 
         created_path = result.plan_path.as_posix()
         console.print(f"[green]Created ExecPlan:[/] {created_path}")

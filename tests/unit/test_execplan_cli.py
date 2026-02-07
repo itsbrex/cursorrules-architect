@@ -2,6 +2,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from typer.testing import CliRunner
 
@@ -85,6 +86,29 @@ class ExecPlanCLITests(unittest.TestCase):
         self.assertEqual(result.exit_code, 1, msg=result.output)
         created = self.root / ".agent" / "exec_plans" / "good-plan" / "EP-20260207-002_good-plan.md"
         self.assertTrue(created.exists())
+
+    def test_new_handles_filesystem_oserror(self) -> None:
+        from agentrules import cli
+
+        with patch(
+            "agentrules.cli.commands.execplan.create_execplan",
+            side_effect=PermissionError("permission denied"),
+        ):
+            result = self.runner.invoke(
+                cli.app,
+                [
+                    "execplan",
+                    "new",
+                    "Permission Test",
+                    "--root",
+                    str(self.root),
+                    "--date",
+                    "20260207",
+                ],
+            )
+
+        self.assertEqual(result.exit_code, 2, msg=result.output)
+        self.assertIn("filesystem error", result.output.lower())
 
 
 if __name__ == "__main__":

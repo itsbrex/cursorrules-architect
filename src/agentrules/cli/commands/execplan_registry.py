@@ -175,6 +175,9 @@ def register(app: typer.Typer) -> None:
         except FileNotFoundError as error:
             console.print(f"[red]{error}[/]")
             raise typer.Exit(2) from error
+        except OSError as error:
+            console.print(f"[red]Registry build failed due to filesystem error: {error}[/]")
+            raise typer.Exit(2) from error
 
         _print_issues(result, console=console)
         if exit_code == 0 and result.wrote_registry and result.output_path is not None:
@@ -219,6 +222,9 @@ def register(app: typer.Typer) -> None:
             )
         except FileNotFoundError as error:
             console.print(f"[red]{error}[/]")
+            raise typer.Exit(2) from error
+        except OSError as error:
+            console.print(f"[red]Registry update failed due to filesystem error: {error}[/]")
             raise typer.Exit(2) from error
 
         _print_issues(result, console=console)
