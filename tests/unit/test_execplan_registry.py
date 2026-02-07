@@ -1,0 +1,129 @@
+import json
+import tempfile
+import unittest
+from pathlib import Path
+
+from agentrules.core.utils.execplan_registry import (
+    build_execplan_registry,
+    collect_execplan_registry,
+)
+
+
+def _write_execplan(path: Path, *, plan_id: str, title: str, depends_on: str = "[]") -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        (
+            "---\n"
+            f"id: {plan_id}\n"
+            f'title: "{title}"\n'
+            "status: planned\n"
+            "kind: feature\n"
+            "domain: backend\n"
+            'owner: "@codex"\n'
+            "created: 2026-02-07\n"
+            "updated: 2026-02-07\n"
+            "tags: [execplan]\n"
+            "touches: [cli]\n"
+            "risk: low\n"
+            "breaking: false\n"
+            "migration: false\n"
+            "links:\n"
+            '  issue: ""\n'
+            '  pr: ""\n'
+            '  docs: ""\n'
+            f"depends_on: {depends_on}\n"
+            "supersedes: []\n"
+            "---\n\n"
+            "# Example\n"
+        ),
+        encoding="utf-8",
+    )
+
+
+class ExecPlanRegistryTests(unittest.TestCase):
+    def test_build_writes_sorted_registry_and_excludes_milestones(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            execplans_dir = root / ".agent" / "exec_plans"
+            registry_path = execplans_dir / "registry.json"
+
+            _write_execplan(
+                execplans_dir / "auth" / "EP-20260207-002_auth.md",
+                plan_id="EP-20260207-002",
+                title="Auth Plan",
+            )
+            _write_execplan(
+                execplans_dir / "billing" / "EP-20260207-001_billing.md",
+                plan_id="EP-20260207-001",
+                title="Billing Plan",
+            )
+            _write_execplan(
+                execplans_dir / "auth" / "milestones" / "active" / "EP-20260207-002_MS001_probe.md",
+                plan_id="EP-20260207-002",
+                title="Milestone should be ignored",
+            )
+
+            result = build_execplan_registry(
+                root=root,
+                execplans_dir=execplans_dir,
+                output_path=registry_path,
+            )
+
+            self.assertTrue(result.wrote_registry)
+            self.assertEqual(result.error_count, 0)
+            self.assertEqual(result.warning_count, 0)
+            self.assertTrue(registry_path.exists())
+
+            payload = json.loads(registry_path.read_text(encoding="utf-8"))
+            ids = [entry["id"] for entry in payload["plans"]]
+            self.assertEqual(ids, ["EP-20260207-001", "EP-20260207-002"])
+            self.assertTrue(all("milestones" not in entry["path"] for entry in payload["plans"]))
+
+    def test_collect_reports_duplicate_execplan_ids(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            execplans_dir = root / ".agent" / "exec_plans"
+            registry_path = execplans_dir / "registry.json"
+
+            _write_execplan(
+                execplans_dir / "a" / "EP-20260207-010_a.md",
+                plan_id="EP-20260207-010",
+                title="Plan A",
+            )
+            _write_execplan(
+                execplans_dir / "b" / "EP-20260207-010_b.md",
+                plan_id="EP-20260207-010",
+                title="Plan B",
+            )
+
+            check = collect_execplan_registry(root=root, execplans_dir=execplans_dir)
+            self.assertGreater(check.error_count, 0)
+            self.assertTrue(any("Duplicate ExecPlan id" in issue.message for issue in check.issues))
+
+            build = build_execplan_registry(
+                root=root,
+                execplans_dir=execplans_dir,
+                output_path=registry_path,
+            )
+            self.assertFalse(build.wrote_registry)
+            self.assertFalse(registry_path.exists())
+
+    def test_collect_reports_unknown_dependency_references(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            execplans_dir = root / ".agent" / "exec_plans"
+
+            _write_execplan(
+                execplans_dir / "docs" / "EP-20260207-020_docs.md",
+                plan_id="EP-20260207-020",
+                title="Docs Plan",
+                depends_on="[EP-20260207-999]",
+            )
+
+            result = collect_execplan_registry(root=root, execplans_dir=execplans_dir)
+            self.assertGreater(result.error_count, 0)
+            self.assertTrue(any("Unknown depends_on id" in issue.message for issue in result.issues))
+
+
+if __name__ == "__main__":
+    unittest.main()
