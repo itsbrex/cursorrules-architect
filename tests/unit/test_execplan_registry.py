@@ -124,6 +124,22 @@ class ExecPlanRegistryTests(unittest.TestCase):
             self.assertGreater(result.error_count, 0)
             self.assertTrue(any("Unknown depends_on id" in issue.message for issue in result.issues))
 
+    def test_collect_supports_execplans_outside_root(self) -> None:
+        with tempfile.TemporaryDirectory() as root_tmp, tempfile.TemporaryDirectory() as execplans_tmp:
+            root = Path(root_tmp)
+            execplans_dir = Path(execplans_tmp)
+
+            _write_execplan(
+                execplans_dir / "api" / "EP-20260207-001_api.md",
+                plan_id="EP-20260207-001",
+                title="API Plan",
+            )
+
+            result = collect_execplan_registry(root=root, execplans_dir=execplans_dir)
+            self.assertEqual(result.error_count, 0)
+            self.assertEqual(len(result.registry["plans"]), 1)
+            self.assertEqual(result.registry["plans"][0]["path"], (execplans_dir / "api" / "EP-20260207-001_api.md").resolve().as_posix())
+
 
 if __name__ == "__main__":
     unittest.main()

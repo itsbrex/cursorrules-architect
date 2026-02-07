@@ -89,6 +89,20 @@ class ExecPlanCreatorTests(unittest.TestCase):
                     update_registry=False,
                 )
 
+    def test_create_execplan_rejects_non_eight_digit_date(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            execplans_dir = root / ".agent" / "exec_plans"
+
+            with self.assertRaisesRegex(ValueError, "YYYYMMDD"):
+                create_execplan(
+                    root=root,
+                    title="Short Date Token",
+                    date_yyyymmdd="2026027",
+                    execplans_dir=execplans_dir,
+                    update_registry=False,
+                )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -259,7 +259,12 @@ def _ensure_date(value: Any, *, field_name: str) -> str:
 
 
 def _to_rel_posix(path: Path, root: Path) -> str:
-    return path.resolve().relative_to(root.resolve()).as_posix()
+    resolved_path = path.resolve()
+    resolved_root = root.resolve()
+    try:
+        return resolved_path.relative_to(resolved_root).as_posix()
+    except ValueError:
+        return resolved_path.as_posix()
 
 
 def _discover_execplan_files(execplans_dir: Path) -> list[Path]:

@@ -19,6 +19,7 @@ from agentrules.core.utils.execplan_registry import (
 )
 
 EXECPLAN_FILENAME_RE = re.compile(r"^EP-(?P<date>\d{8})-(?P<sequence>\d{3})(?:\b|[_-].*)")
+DATE_YYYYMMDD_RE = re.compile(r"^\d{8}$")
 
 _TEMPLATE_PACKAGE = "agentrules.core.utils.file_creation"
 _TEMPLATE_NAME = "EXECPLAN_TEMPLATE.md"
@@ -56,6 +57,8 @@ def _is_milestone_path(path: Path) -> bool:
 
 
 def _validate_date_yyyymmdd(value: str) -> datetime:
+    if DATE_YYYYMMDD_RE.fullmatch(value) is None:
+        raise ValueError(f"Date must use YYYYMMDD format (got {value!r}).")
     try:
         return datetime.strptime(value, "%Y%m%d")
     except ValueError as error:
