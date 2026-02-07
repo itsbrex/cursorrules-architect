@@ -8,7 +8,7 @@ from agentrules.core.pipeline.config import PipelineResult, PipelineSettings
 from agentrules.core.utils.file_creation.agent_scaffold import create_agent_scaffold
 from agentrules.core.utils.file_creation.cursorignore import create_cursorignore
 from agentrules.core.utils.file_creation.phases_output import save_phase_outputs
-from agentrules.core.utils.formatters.clean_agentrules import clean_agentrules
+from agentrules.core.utils.formatters.clean_agentrules import clean_agentrules, ensure_execplans_guidance
 
 
 @dataclass(frozen=True)
@@ -110,6 +110,16 @@ class PipelineOutputWriter:
         )
         if success:
             messages.append("[green]Cleaned Agent rules file: removed text before 'You are...'[/]")
+        else:
+            messages.append(f"[yellow]{message}[/]")
+
+        success, message = ensure_execplans_guidance(
+            str(settings.target_directory),
+            filename=options.rules_filename,
+        )
+        if success:
+            style = "dim" if "already present" in message.lower() else "green"
+            messages.append(f"[{style}]{message}[/]")
         else:
             messages.append(f"[yellow]{message}[/]")
 
