@@ -7,6 +7,7 @@ import typer
 from .bootstrap import bootstrap_runtime
 from .commands.analyze import register as register_analyze
 from .commands.configure import register as register_configure
+from .commands.execplan import register as register_execplan
 from .commands.execplan_registry import register as register_execplan_registry
 from .commands.keys import register as register_keys
 from .commands.tree import register as register_tree
@@ -25,6 +26,7 @@ def build_app() -> typer.Typer:
 
     register_analyze(app)
     register_configure(app)
+    register_execplan(app)
     register_execplan_registry(app)
     register_keys(app)
     register_tree(app)
