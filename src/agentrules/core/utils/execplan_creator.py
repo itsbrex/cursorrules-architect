@@ -9,6 +9,7 @@ from importlib import resources
 from pathlib import Path
 from string import Template
 
+from agentrules.core.utils.execplan_identity import parse_execplan_filename
 from agentrules.core.utils.execplan_paths import is_execplan_milestone_path
 from agentrules.core.utils.execplan_registry import (
     ALLOWED_DOMAINS,
@@ -19,7 +20,6 @@ from agentrules.core.utils.execplan_registry import (
     build_execplan_registry,
 )
 
-EXECPLAN_FILENAME_RE = re.compile(r"^EP-(?P<date>\d{8})-(?P<sequence>\d{3})(?:\b|[_-].*)")
 DATE_YYYYMMDD_RE = re.compile(r"^\d{8}$")
 
 _TEMPLATE_PACKAGE = "agentrules.core.utils.file_creation"
@@ -67,12 +67,13 @@ def _next_sequence_for_date(execplans_dir: Path, date_yyyymmdd: str) -> int:
     for candidate in execplans_dir.rglob("EP-*.md"):
         if not candidate.is_file() or is_execplan_milestone_path(candidate, execplans_root=execplans_dir):
             continue
-        match = EXECPLAN_FILENAME_RE.match(candidate.name)
-        if match is None:
+        parsed = parse_execplan_filename(candidate.name)
+        if parsed is None:
             continue
-        if match.group("date") != date_yyyymmdd:
+        _, parsed_date, sequence = parsed
+        if parsed_date != date_yyyymmdd:
             continue
-        max_sequence = max(max_sequence, int(match.group("sequence")))
+        max_sequence = max(max_sequence, sequence)
     return max_sequence + 1
 
 

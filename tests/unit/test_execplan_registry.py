@@ -109,6 +109,30 @@ class ExecPlanRegistryTests(unittest.TestCase):
             self.assertFalse(build.wrote_registry)
             self.assertFalse(registry_path.exists())
 
+    def test_collect_rejects_front_matter_id_filename_id_mismatch(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            execplans_dir = root / ".agent" / "exec_plans"
+            registry_path = execplans_dir / "registry.json"
+
+            _write_execplan(
+                execplans_dir / "mismatch" / "EP-20260207-001_mismatch.md",
+                plan_id="EP-20260207-999",
+                title="Mismatch Plan",
+            )
+
+            result = collect_execplan_registry(root=root, execplans_dir=execplans_dir)
+            self.assertGreater(result.error_count, 0)
+            self.assertTrue(any("must match filename id" in issue.message for issue in result.issues))
+
+            build = build_execplan_registry(
+                root=root,
+                execplans_dir=execplans_dir,
+                output_path=registry_path,
+            )
+            self.assertFalse(build.wrote_registry)
+            self.assertFalse(registry_path.exists())
+
     def test_collect_reports_unknown_dependency_references(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

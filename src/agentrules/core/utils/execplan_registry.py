@@ -11,6 +11,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
 
+from agentrules.core.utils.execplan_identity import extract_execplan_id_from_filename
 from agentrules.core.utils.execplan_paths import is_execplan_archive_path, is_execplan_milestone_path
 
 FRONT_MATTER_RE = re.compile(r"\A\s*---\s*\n(.*?)\n---\s*(?:\n|$)", re.DOTALL)
@@ -302,11 +303,20 @@ def _build_plan(
             )
         )
 
-    if plan_id and plan_id not in plan_path.name:
+    filename_id = extract_execplan_id_from_filename(plan_path.name)
+    if filename_id is None:
         issues.append(
             RegistryIssue(
-                "warning",
-                f"Plan id '{plan_id}' does not appear in filename '{plan_path.name}'.",
+                "error",
+                f"Filename '{plan_path.name}' must start with canonical id EP-YYYYMMDD-NNN.",
+                path=path_text,
+            )
+        )
+    elif plan_id != filename_id:
+        issues.append(
+            RegistryIssue(
+                "error",
+                f"Front matter id '{plan_id}' must match filename id '{filename_id}'.",
                 path=path_text,
             )
         )
