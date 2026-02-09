@@ -47,7 +47,7 @@ Required keys:
 - `title`: short milestone title
 - `status`: `planned | in_progress | completed | blocked | archived`
 - `domain`: `backend | frontend | console | infra | cross-cutting`
-- `owner`: `@handle` (e.g. codex)
+- `owner`: `@handle` (e.g. codex, claude, etc.)
 - `created`: `YYYY-MM-DD`
 - `updated`: `YYYY-MM-DD` (bump when materially revised)
 

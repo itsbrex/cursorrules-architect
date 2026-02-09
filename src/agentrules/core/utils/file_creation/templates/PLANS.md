@@ -1,4 +1,4 @@
-# Codex Execution Plans (ExecPlans)
+# Execution Plans (ExecPlans)
 
 This document describes the requirements for an execution plan ("ExecPlan"), a design document that a coding agent can follow to deliver a working feature or system change. Treat the reader as a complete beginner to this repository: they have only the current working tree and the single ExecPlan file you provide. There is no memory of prior plans and no external context.
 
@@ -53,7 +53,7 @@ Required keys and allowed values:
 - `status` (required): `planned | active | paused | done | archived`
 - `kind` (required): `feature | refactor | bugfix | migration | infra | spike | perf | docs | tests`
 - `domain` (required): `backend | frontend | console | infra | cross-cutting`
-- `owner` (required): `@handle` (e.g. codex)
+- `owner` (required): `@handle` (e.g. codex, claude, etc.)
 - `created` (required): `YYYY-MM-DD`
 - `updated` (required): `YYYY-MM-DD` (must be bumped when the plan is materially revised)
 - `tags` (optional): short list of labels
