@@ -6,11 +6,13 @@ from collections.abc import MutableMapping
 
 from agentrules.core.utils.constants import DEFAULT_RULES_FILENAME
 
+from .constants import RULES_FILENAME_ENV_VAR
 from .environment import EnvironmentManager
 from .models import CLIConfig, ExclusionOverrides, OutputPreferences, ResearcherMode
 from .repository import ConfigRepository, TomlConfigRepository
 from .services import exclusions, features, outputs, phase_models, providers
 from .services import logging as logging_service
+from .utils import normalize_rules_filename
 
 
 class ConfigManager:
@@ -162,6 +164,17 @@ class ConfigManager:
         if normalized != previous:
             self._repository.save(config)
         return normalized
+
+    def resolve_rules_filename(
+        self,
+        override: str | None = None,
+        *,
+        default: str | None = None,
+    ) -> str:
+        configured = self.get_rules_filename(default=default)
+        env_override = self._environment.getenv(RULES_FILENAME_ENV_VAR)
+        resolved_from_env = normalize_rules_filename(env_override, default=configured)
+        return normalize_rules_filename(override, default=resolved_from_env)
 
     def set_rules_filename(self, name: str) -> CLIConfig:
         config = self._repository.load()

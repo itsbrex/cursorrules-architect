@@ -13,6 +13,7 @@ CONFIG_FILE = CONFIG_DIR / "config.toml"
 
 DEFAULT_VERBOSITY = "quiet"
 VERBOSITY_ENV_VAR = "AGENTRULES_LOG_LEVEL"
+RULES_FILENAME_ENV_VAR = "AGENTRULES_RULES_FILENAME"
 VERBOSITY_PRESETS = {
     "quiet": logging.WARNING,
     "standard": logging.INFO,
@@ -29,4 +30,3 @@ PROVIDER_ENV_MAP = {
 }
 
 TRUTHY_ENV_VALUES = {"1", "true", "yes", "on"}
-

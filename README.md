@@ -126,6 +126,7 @@ agentrules keys
 
 - `agentrules` – interactive main menu (analyze, configure models/outputs, check keys).
 - `agentrules analyze /path/to/project` – full six-phase analysis.
+- `agentrules analyze /path/to/project --rules-filename CLAUDE.md` – one-run override for output rules filename.
 - `agentrules execplan new \"Title\"` – create a new ExecPlan markdown file under `.agent/exec_plans/<slug>/`.
 - `agentrules execplan milestone new EP-YYYYMMDD-NNN \"Title\"` – create a milestone under a specific ExecPlan.
 - `agentrules execplan milestone list EP-YYYYMMDD-NNN [--active-only]` – list milestones for one ExecPlan.
@@ -184,7 +185,12 @@ agentrules execplan milestone archive EP-20260207-001 --ms 1
 - **Environment variables**:
   - `AGENTRULES_CONFIG_DIR` – alternate config root.
   - `AGENTRULES_LOG_LEVEL` – overrides persisted verbosity.
-  - `AGENTRULES_RULES_FILENAME` (alias of `DEFAULT_RULES_FILENAME`) – customize the generated `AGENTS.md` name.
+  - `AGENTRULES_RULES_FILENAME` – runtime override for generated rules filename (for example `CLAUDE.md`).
+- **Rules filename precedence**:
+  1. `agentrules analyze --rules-filename <name>`
+  2. `AGENTRULES_RULES_FILENAME`
+  3. `outputs.rules_filename` in `config.toml` (set via `agentrules configure --outputs`)
+  4. `AGENTS.md` default
 
 ## 🧠 Model Presets & Providers
 

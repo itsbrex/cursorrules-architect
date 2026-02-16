@@ -78,3 +78,21 @@ async def test_final_analysis_lazy_factory_success_and_error(monkeypatch):
     fa2 = FinalAnalysis()
     out2 = await fa2.run({"report": "R"}, ["."])
     assert "error" in out2
+
+
+@pytest.mark.asyncio
+async def test_final_analysis_prompt_uses_overridden_rules_filename(monkeypatch):
+    import agentrules.core.agents.factory.factory as factory_mod
+
+    captured_prompt: dict[str, str] = {"prompt": ""}
+
+    class ArchCapture:
+        async def final_analysis(self, consolidated_report, prompt=None):
+            captured_prompt["prompt"] = prompt or ""
+            return {"analysis": "OK"}
+
+    factory_mod.get_architect_for_phase = lambda phase: ArchCapture()
+    fa = FinalAnalysis()
+    out = await fa.run({"report": "R"}, ["."], rules_filename="CLAUDE.md")
+    assert out["analysis"] == "OK"
+    assert "tailored CLAUDE.md file using" in captured_prompt["prompt"]

@@ -93,9 +93,14 @@ class AnalysisPipeline:
         self,
         consolidated_report: dict[str, object],
         snapshot: ProjectSnapshot,
+        rules_filename: str | None = None,
     ) -> dict[str, object]:
         tree = list(snapshot.tree)
-        final_raw = await self._final.run(consolidated_report, tree)
+        final_raw = await self._final.run(
+            consolidated_report,
+            tree,
+            rules_filename=rules_filename,
+        )
         return dict(final_raw)
 
     async def run(self, settings: PipelineSettings, snapshot: ProjectSnapshot) -> PipelineResult:

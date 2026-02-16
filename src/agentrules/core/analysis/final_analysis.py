@@ -16,6 +16,7 @@ from collections.abc import Sequence
 from agentrules.config.prompts.final_analysis_prompt import (
     format_final_analysis_prompt,  # Function to format the final analysis prompt.
 )
+from agentrules.core.utils.constants import DEFAULT_RULES_FILENAME
 
 # Architect factory is resolved at call time to honor test monkeypatching
 
@@ -60,6 +61,7 @@ class FinalAnalysis:
         self,
         consolidated_report: dict,
         project_structure: Sequence[str] | None = None,
+        rules_filename: str | None = None,
     ) -> dict:
         """
         Run the Final Analysis Phase using the configured model.
@@ -67,13 +69,18 @@ class FinalAnalysis:
         Args:
             consolidated_report: Dictionary containing the consolidated report from Phase 5.
             project_structure: List of strings representing the project directory tree.
+            rules_filename: Target filename for the generated rules document.
 
         Returns:
             Dictionary containing the final analysis and token usage.
         """
         try:
             # Format the prompt using the template from the prompts file.
-            prompt = format_final_analysis_prompt(consolidated_report, project_structure)
+            prompt = format_final_analysis_prompt(
+                consolidated_report,
+                project_structure,
+                rules_filename=rules_filename or DEFAULT_RULES_FILENAME,
+            )
 
             logger.info("[bold]Final Analysis:[/bold] Creating Agent rules from consolidated report")
 

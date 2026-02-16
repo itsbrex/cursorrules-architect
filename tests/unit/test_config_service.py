@@ -27,6 +27,7 @@ class ConfigServiceTestCase(unittest.TestCase):
         for env_var in self.configuration.PROVIDER_ENV_MAP.values():
             self._env_backup[env_var] = os.environ.pop(env_var, None)
         self._verbosity_backup = os.environ.pop(self.configuration.VERBOSITY_ENV_VAR, None)
+        self._rules_filename_backup = os.environ.pop(self.configuration.RULES_FILENAME_ENV_VAR, None)
         self._offline_backup = os.environ.pop("OFFLINE", None)
 
     def tearDown(self) -> None:
@@ -42,6 +43,10 @@ class ConfigServiceTestCase(unittest.TestCase):
             os.environ.pop(self.configuration.VERBOSITY_ENV_VAR, None)
         else:
             os.environ[self.configuration.VERBOSITY_ENV_VAR] = self._verbosity_backup
+        if self._rules_filename_backup is None:
+            os.environ.pop(self.configuration.RULES_FILENAME_ENV_VAR, None)
+        else:
+            os.environ[self.configuration.RULES_FILENAME_ENV_VAR] = self._rules_filename_backup
         if self._offline_backup is None:
             os.environ.pop("OFFLINE", None)
         else:
@@ -150,3 +155,21 @@ class ConfigServiceTestCase(unittest.TestCase):
         cfg = self.config_manager.load()
         self.assertFalse(cfg.outputs.generate_agent_scaffold)
         self.assertFalse(self.config_manager.should_generate_agent_scaffold())
+
+    def test_resolve_rules_filename_uses_config_by_default(self) -> None:
+        self.config_manager.set_rules_filename("CLAUDE.md")
+        self.assertEqual(self.config_manager.resolve_rules_filename(), "CLAUDE.md")
+
+    def test_resolve_rules_filename_env_overrides_config(self) -> None:
+        self.config_manager.set_rules_filename("AGENTS.md")
+        os.environ[self.configuration.RULES_FILENAME_ENV_VAR] = "CLAUDE.md"
+        self.assertEqual(self.config_manager.resolve_rules_filename(), "CLAUDE.md")
+
+    def test_resolve_rules_filename_invalid_env_falls_back_to_config(self) -> None:
+        self.config_manager.set_rules_filename("AGENTS.md")
+        os.environ[self.configuration.RULES_FILENAME_ENV_VAR] = "nested/CLAUDE.md"
+        self.assertEqual(self.config_manager.resolve_rules_filename(), "AGENTS.md")
+
+    def test_resolve_rules_filename_cli_override_beats_env(self) -> None:
+        os.environ[self.configuration.RULES_FILENAME_ENV_VAR] = "CLAUDE.md"
+        self.assertEqual(self.config_manager.resolve_rules_filename(override="CURSOR.md"), "CURSOR.md")

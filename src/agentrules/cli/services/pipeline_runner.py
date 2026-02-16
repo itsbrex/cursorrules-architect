@@ -38,7 +38,13 @@ def _activate_offline_mode(context: CliContext) -> None:
         context.console.print(f"[red]Failed to enable OFFLINE mode: {error}[/]")
 
 
-def run_pipeline(path: Path, offline: bool, context: CliContext) -> None:
+def run_pipeline(
+    path: Path,
+    offline: bool,
+    context: CliContext,
+    *,
+    rules_filename_override: str | None = None,
+) -> None:
     """Execute the analysis pipeline for the given path."""
 
     if offline:
@@ -47,6 +53,7 @@ def run_pipeline(path: Path, offline: bool, context: CliContext) -> None:
     _activate_offline_mode(context)
 
     config_manager = get_config_manager()
+    resolved_rules_filename = config_manager.resolve_rules_filename(override=rules_filename_override)
     exclusion_overrides = config_manager.get_exclusion_overrides()
     effective_dirs, effective_files, effective_exts = config_manager.get_effective_exclusions()
     settings = PipelineSettings(
@@ -161,7 +168,11 @@ def run_pipeline(path: Path, offline: bool, context: CliContext) -> None:
         final_analysis = await view.run_with_spinner(
             "Creating rules...",
             "white",
-            pipeline.run_final(consolidated_report, snapshot),
+            pipeline.run_final(
+                consolidated_report,
+                snapshot,
+                rules_filename=resolved_rules_filename,
+            ),
         )
         view.render_completion("Agent rules ready", "white")
 
@@ -188,7 +199,7 @@ def run_pipeline(path: Path, offline: bool, context: CliContext) -> None:
 
     output_writer = PipelineOutputWriter()
     output_options = PipelineOutputOptions(
-        rules_filename=config_manager.get_rules_filename(),
+        rules_filename=resolved_rules_filename,
         generate_phase_outputs=config_manager.should_generate_phase_outputs(),
         generate_cursorignore=config_manager.should_generate_cursorignore(),
         generate_agent_scaffold=config_manager.should_generate_agent_scaffold(),

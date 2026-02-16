@@ -9,12 +9,14 @@ import json
 from collections.abc import Sequence
 from datetime import datetime
 
+from agentrules.core.utils.constants import DEFAULT_RULES_FILENAME
+
 # Prompt for the Final Analysis (OpenAI)
 FINAL_ANALYSIS_PROMPT = """
 
 You are an AI prompt engineer specializing in agent rules generation for AI coding agents (e.g. Codex, Claude Code, etc).
 
-Agent rules (persisted as `AGENTS.md` files) are sophisticated prompt engineering frameworks that serve as persistent context providers for the AI agent responsible for the development of the codebase. They represent a significant evolution in AI-assisted development by creating a comprehensive "persona" for the agent to adopt during coding sessions. The AGENTS.md is tailored to the codebase it is rooted in and provides the agent instructions or tips for working within the codebase. Some examples might be: coding conventions, info about how code is organized, or instructions for how to run or test code.
+Agent rules (persisted as `{rules_filename}` files) are sophisticated prompt engineering frameworks that serve as persistent context providers for the AI agent responsible for the development of the codebase. They represent a significant evolution in AI-assisted development by creating a comprehensive "persona" for the agent to adopt during coding sessions. The {rules_filename} file is tailored to the codebase it is rooted in and provides the agent instructions or tips for working within the codebase. Some examples might be: coding conventions, info about how code is organized, or instructions for how to run or test code.
 
 ### Core Functions:
 
@@ -23,13 +25,13 @@ Agent rules (persisted as `AGENTS.md` files) are sophisticated prompt engineerin
 3. **Behavioral Guidance**: Control how the AI interacts, reasons, and responds
 4. **Consistency Enforcement**: Ensure coherent development patterns across a project
 
-Your task is to thoroughly analyze both the project report and the project structure provided within specific XML tags in order to create a tailored AGENTS.md use the following ARS-1 format.
+Your task is to thoroughly analyze both the project report and the project structure provided within specific XML tags in order to create a tailored {rules_filename} file using the following ARS-1 format.
 
 # ARS-1: The Agent Rules Specification
 
 ## Introduction
 
-The Agent Rules Specification (ARS-1) provides a standardized framework for creating effective `AGENTS.md` files. This specification draws from extensive analysis of successful implementations and aims to optimize AI-assisted development across any codebase or technology stack.
+The Agent Rules Specification (ARS-1) provides a standardized framework for creating effective `{rules_filename}` files. This specification draws from extensive analysis of successful implementations and aims to optimize AI-assisted development across any codebase or technology stack.
 
 ## Core Structure
 
@@ -426,6 +428,7 @@ The ARS-1 specification provides a structured framework for creating effective a
 def format_final_analysis_prompt(
     consolidated_report: dict,
     project_structure: Sequence[str] | None = None,
+    rules_filename: str = DEFAULT_RULES_FILENAME,
 ) -> str:
     """
     Format the Final Analysis prompt with the consolidated report and project structure.
@@ -433,6 +436,7 @@ def format_final_analysis_prompt(
     Args:
         consolidated_report: Dictionary containing the consolidated report
         project_structure: List of strings representing the project tree structure
+        rules_filename: Target filename for the generated rules document
 
     Returns:
         Formatted prompt string
@@ -449,10 +453,14 @@ def format_final_analysis_prompt(
     # Get current month and year
     current_month = datetime.now().strftime("%B")
     current_year = datetime.now().strftime("%Y")
+    cleaned_rules_filename = rules_filename.strip()
+    if not cleaned_rules_filename or "/" in cleaned_rules_filename or "\\" in cleaned_rules_filename:
+        cleaned_rules_filename = DEFAULT_RULES_FILENAME
 
     return FINAL_ANALYSIS_PROMPT.format(
         report=json.dumps(consolidated_report, indent=2),
         project_structure=structure_str,
         current_month=current_month,
-        current_year=current_year
+        current_year=current_year,
+        rules_filename=cleaned_rules_filename,
     )

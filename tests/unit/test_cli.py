@@ -66,3 +66,38 @@ class CLITestCase(unittest.TestCase):
         self.assertEqual(call_args[0], Path.cwd())
         self.assertTrue(call_args[1])
         self.assertIs(call_args[2], context)
+        self.assertIsNone(mock_run_pipeline.call_args.kwargs["rules_filename_override"])
+
+    def test_analyze_command_accepts_rules_filename_override(self) -> None:
+        from agentrules import cli
+
+        runner = CliRunner()
+
+        with patch("agentrules.cli.commands.analyze.bootstrap_runtime") as mock_bootstrap, patch(
+            "agentrules.cli.commands.analyze.run_pipeline"
+        ) as mock_run_pipeline:
+            context = MagicMock()
+            mock_bootstrap.return_value = context
+            result = runner.invoke(
+                cli.app,
+                ["analyze", str(Path.cwd()), "--rules-filename", "CLAUDE.md"],
+                env={"AGENTRULES_CONFIG_DIR": self.temp_dir.name},
+            )
+
+        self.assertEqual(result.exit_code, 0, msg=result.output)
+        mock_run_pipeline.assert_called_once()
+        self.assertEqual(mock_run_pipeline.call_args.kwargs["rules_filename_override"], "CLAUDE.md")
+
+    def test_analyze_command_rejects_rules_filename_paths(self) -> None:
+        from agentrules import cli
+
+        runner = CliRunner()
+
+        result = runner.invoke(
+            cli.app,
+            ["analyze", str(Path.cwd()), "--rules-filename", "nested/CLAUDE.md"],
+            env={"AGENTRULES_CONFIG_DIR": self.temp_dir.name},
+        )
+
+        self.assertNotEqual(result.exit_code, 0)
+        self.assertIn("Rules filename override must be a file name, not a path.", result.output)
