@@ -162,7 +162,7 @@ Milestone ID format:
 Milestone filename format:
 
 - `.agent/exec_plans/<short-slug>/milestones/active/EP-YYYYMMDD-NNN_MS###_<short-slug>.md`
-- Archive to: `.agent/exec_plans/<short-slug>/milestones/archive/YYYY/MM/DD/EP-YYYYMMDD-NNN_MS###_<short-slug>.md`
+- Archive to: `.agent/exec_plans/<short-slug>/milestones/archive/EP-YYYYMMDD-NNN_MS###_<short-slug>.md`
 
 ### Instructions for Creating Milestones
 

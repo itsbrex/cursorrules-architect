@@ -483,16 +483,11 @@ def archive_execplan_milestone(
                 f"{execplan_id}/MS{sequence:03d}. Resolve duplicates: {joined}"
             )
 
-        day_token = archive_date_yyyymmdd or _today_yyyymmdd_local()
-        day_value = _validate_date_yyyymmdd(day_token)
-        archive_dir = (
-            plan_root
-            / MILESTONES_DIR
-            / ARCHIVE_DIR
-            / day_value.strftime("%Y")
-            / day_value.strftime("%m")
-            / day_value.strftime("%d")
-        )
+        # Keep `archive_date_yyyymmdd` for API compatibility even though archive
+        # layout no longer shards by date.
+        if archive_date_yyyymmdd is not None:
+            _validate_date_yyyymmdd(archive_date_yyyymmdd)
+        archive_dir = plan_root / MILESTONES_DIR / ARCHIVE_DIR
         archive_dir.mkdir(parents=True, exist_ok=True)
 
         source_path = candidates[0]

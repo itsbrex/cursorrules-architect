@@ -200,7 +200,7 @@ class ExecPlanMilestonesTests(unittest.TestCase):
                     execplans_dir=execplans_dir,
                 )
 
-    def test_archive_moves_active_milestone_to_dated_archive_path(self) -> None:
+    def test_archive_moves_active_milestone_to_archive_path(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             execplans_dir = root / ".agent" / "exec_plans"
@@ -229,7 +229,8 @@ class ExecPlanMilestonesTests(unittest.TestCase):
 
             self.assertFalse(created_milestone.milestone_path.exists())
             self.assertTrue(archived.archived_path.exists())
-            self.assertIn("/milestones/archive/2026/02/12/", archived.archived_path.as_posix())
+            self.assertIn("/milestones/archive/", archived.archived_path.as_posix())
+            self.assertNotIn("/milestones/archive/2026/02/12/", archived.archived_path.as_posix())
 
     def test_archive_missing_active_milestone_raises(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

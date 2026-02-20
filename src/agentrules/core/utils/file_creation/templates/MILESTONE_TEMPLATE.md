@@ -39,7 +39,7 @@ Example:
 
 When complete, archive to:
 
-- `.agent/exec_plans/<short_slug>/milestones/archive/YYYY/MM/DD/EP-YYYYMMDD-NNN_MS###_<short-slug>.md`
+- `.agent/exec_plans/<short_slug>/milestones/archive/EP-YYYYMMDD-NNN_MS###_<short-slug>.md`
 
 ### Required YAML front matter (machine-readable)
 

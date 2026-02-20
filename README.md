@@ -132,6 +132,7 @@ agentrules keys
 - `agentrules execplan milestone list EP-YYYYMMDD-NNN [--active-only]` – list milestones for one ExecPlan.
 - `agentrules execplan milestone archive EP-YYYYMMDD-NNN --ms <N>` – archive an active milestone sequence.
 - `agentrules execplan-registry [build|check|update]` – manage `.agent/exec_plans/registry.json` from ExecPlan front matter.
+- `agentrules scaffold sync [--check|--force]` – sync `.agent/PLANS.md` and `.agent/templates/MILESTONE_TEMPLATE.md` with packaged defaults.
 - `agentrules configure --models` – assign presets per phase with guided prompts; the Phase 1 → Researcher entry lets you toggle the agent On/Off once a Tavily key is configured.
 - `agentrules configure --outputs` – toggle `.cursorignore`, `.agent/` scaffold generation, `phases_output/`, and custom rules filename.
 - `agentrules configure --logging` – set verbosity (`quiet`, `standard`, `verbose`) or export via `AGENTRULES_LOG_LEVEL`.
@@ -143,7 +144,7 @@ ExecPlans and milestones use canonical IDs and deterministic file locations:
 - ExecPlan ID: `EP-YYYYMMDD-NNN`
 - Milestone ID: `EP-YYYYMMDD-NNN/MS###`
 - Active milestone path: `.agent/exec_plans/<plan-slug>/milestones/active/EP-YYYYMMDD-NNN_MS###_<milestone-slug>.md`
-- Archive milestone path: `.agent/exec_plans/<plan-slug>/milestones/archive/YYYY/MM/DD/EP-YYYYMMDD-NNN_MS###_<milestone-slug>.md`
+- Archive milestone path: `.agent/exec_plans/<plan-slug>/milestones/archive/EP-YYYYMMDD-NNN_MS###_<milestone-slug>.md`
 
 Milestone creation is parent-first and sequence-safe:
 

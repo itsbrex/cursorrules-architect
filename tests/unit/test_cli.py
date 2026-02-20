@@ -101,3 +101,45 @@ class CLITestCase(unittest.TestCase):
 
         self.assertNotEqual(result.exit_code, 0)
         self.assertIn("Rules filename override must be a file name, not a path.", result.output)
+
+    def test_scaffold_sync_check_exits_nonzero_when_drift_detected(self) -> None:
+        from agentrules import cli
+        from agentrules.core.utils.file_creation.agent_scaffold import AgentScaffoldSyncResult
+
+        runner = CliRunner()
+
+        with patch("agentrules.cli.commands.scaffold.bootstrap_runtime") as mock_bootstrap, patch(
+            "agentrules.cli.commands.scaffold.sync_agent_scaffold"
+        ) as mock_sync:
+            context = MagicMock()
+            mock_bootstrap.return_value = context
+            mock_sync.return_value = AgentScaffoldSyncResult(
+                ok=False,
+                changed=False,
+                messages=("Missing .agent/PLANS.md",),
+            )
+            result = runner.invoke(
+                cli.app,
+                ["scaffold", "sync", "--check", "--root", str(Path.cwd())],
+                env={"AGENTRULES_CONFIG_DIR": self.temp_dir.name},
+            )
+
+        self.assertEqual(result.exit_code, 1, msg=result.output)
+        mock_sync.assert_called_once_with(Path.cwd(), check=True, force=False)
+
+    def test_scaffold_sync_rejects_check_and_force_combination(self) -> None:
+        from agentrules import cli
+
+        runner = CliRunner()
+
+        with patch("agentrules.cli.commands.scaffold.bootstrap_runtime") as mock_bootstrap:
+            context = MagicMock()
+            mock_bootstrap.return_value = context
+            result = runner.invoke(
+                cli.app,
+                ["scaffold", "sync", "--check", "--force"],
+                env={"AGENTRULES_CONFIG_DIR": self.temp_dir.name},
+            )
+
+        self.assertNotEqual(result.exit_code, 0)
+        self.assertIn("Choose either --check or --force, not both.", result.output)
