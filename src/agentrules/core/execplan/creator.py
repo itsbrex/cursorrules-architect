@@ -406,7 +406,11 @@ def archive_execplan(
             top_level_plan_files = tuple(
                 candidate.resolve()
                 for candidate in source_plan_root.glob("EP-*.md")
-                if candidate.is_file() and not is_execplan_milestone_path(candidate, execplans_root=resolved_execplans_dir)
+                if candidate.is_file()
+                and not is_execplan_milestone_path(
+                    candidate,
+                    execplans_root=resolved_execplans_dir,
+                )
             )
             if len(top_level_plan_files) != 1 or top_level_plan_files[0] != source_plan_path:
                 joined = ", ".join(path.as_posix() for path in sorted(top_level_plan_files))

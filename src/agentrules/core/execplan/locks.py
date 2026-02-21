@@ -5,10 +5,10 @@ from __future__ import annotations
 import os
 import re
 import time
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import BinaryIO, Callable, cast
+from typing import BinaryIO, cast
 
 try:
     import fcntl

@@ -42,8 +42,10 @@ REQUIRED_KEYS = frozenset(
 
 ALLOWED_STATUSES = frozenset({"planned", "active", "paused", "done", "archived"})
 ALLOWED_KINDS = frozenset({"feature", "refactor", "bugfix", "migration", "infra", "spike", "perf", "docs", "tests"})
-ALLOWED_DOMAINS = frozenset({"backend", "frontend", "console", "infra", "cross-cutting", "fullstack",})
-ALLOWED_TOUCHES = frozenset({"api", "db", "ui", "cli", "agents", "ops", "security", "tests", "docs", "backend", "frontend"})
+ALLOWED_DOMAINS = frozenset({"backend", "frontend", "console", "infra", "cross-cutting", "fullstack"})
+ALLOWED_TOUCHES = frozenset(
+    {"api", "db", "ui", "cli", "agents", "ops", "security", "tests", "docs", "backend", "frontend"}
+)
 ALLOWED_RISK = frozenset({"low", "med", "high"})
 
 DEFAULT_EXECPLANS_DIR = Path(".agent/exec_plans")

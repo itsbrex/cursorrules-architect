@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from collections.abc import Mapping, MutableMapping
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 
-class StreamEventType(str, Enum):
+class StreamEventType(StrEnum):
     """Normalized event types emitted by provider streaming implementations."""
 
     TEXT_DELTA = "text_delta"

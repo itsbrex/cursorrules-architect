@@ -377,7 +377,7 @@ def register(app: typer.Typer) -> None:
             )
             if include_path:
                 line += f" -> {summary.path}"
-            console.print(line)
+            console.print(line, markup=False, soft_wrap=True)
         raise typer.Exit(0)
 
     @milestone_app.command("new")
