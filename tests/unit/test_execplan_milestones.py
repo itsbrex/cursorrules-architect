@@ -3,8 +3,9 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
+from agentrules.core.execplan import locks as lock_module
 from agentrules.core.execplan import milestones as milestone_module
-from agentrules.core.execplan.creator import create_execplan
+from agentrules.core.execplan.creator import archive_execplan, create_execplan
 from agentrules.core.execplan.milestones import (
     archive_execplan_milestone,
     create_execplan_milestone,
@@ -56,28 +57,28 @@ class ExecPlanMilestonesTests(unittest.TestCase):
                 self.modes.append(mode)
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            plan_root = Path(tmpdir) / ".agent" / "exec_plans" / "demo"
+            lock_path = Path(tmpdir) / ".agent" / "exec_plans" / ".locks" / "EP-20260207-001.lock"
             fake_msvcrt = FakeMsvcrt()
 
             with (
-                mock.patch.object(milestone_module, "fcntl", None),
-                mock.patch.object(milestone_module, "msvcrt", fake_msvcrt),
-                mock.patch.object(milestone_module, "_WINDOWS_LOCK_RETRY_DELAY_SECONDS", 0),
+                mock.patch.object(lock_module, "fcntl", None),
+                mock.patch.object(lock_module, "msvcrt", fake_msvcrt),
+                mock.patch.object(lock_module, "_WINDOWS_LOCK_RETRY_DELAY_SECONDS", 0),
             ):
-                with milestone_module._plan_milestone_lock(plan_root):
-                    self.assertTrue((plan_root / "milestones" / ".milestones.lock").exists())
+                with lock_module.file_lock(lock_path):
+                    self.assertTrue(lock_path.exists())
 
         self.assertEqual(fake_msvcrt.modes, [FakeMsvcrt.LK_NBLCK, FakeMsvcrt.LK_UNLCK])
 
     def test_plan_milestone_lock_fails_when_no_backend_available(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
-            plan_root = Path(tmpdir) / ".agent" / "exec_plans" / "demo"
+            lock_path = Path(tmpdir) / ".agent" / "exec_plans" / ".locks" / "EP-20260207-001.lock"
             with (
-                mock.patch.object(milestone_module, "fcntl", None),
-                mock.patch.object(milestone_module, "msvcrt", None),
+                mock.patch.object(lock_module, "fcntl", None),
+                mock.patch.object(lock_module, "msvcrt", None),
             ):
                 with self.assertRaisesRegex(RuntimeError, "No supported file-locking backend"):
-                    with milestone_module._plan_milestone_lock(plan_root):
+                    with lock_module.file_lock(lock_path):
                         self.fail("Lock context should not succeed without a backend.")
 
     def test_create_milestone_uses_parent_and_title_codification(self) -> None:
@@ -105,7 +106,7 @@ class ExecPlanMilestonesTests(unittest.TestCase):
             self.assertEqual(created_milestone.milestone_id, "EP-20260207-001/MS001")
             self.assertEqual(
                 created_milestone.milestone_path.name,
-                "EP-20260207-001_MS001_implement-oauth-callback-flow.md",
+                "MS001_implement-oauth-callback-flow.md",
             )
             content = created_milestone.milestone_path.read_text(encoding="utf-8")
             self.assertIn("execplan_id: EP-20260207-001", content)
@@ -177,6 +178,29 @@ class ExecPlanMilestonesTests(unittest.TestCase):
 
             self.assertEqual(second.milestone_id, "EP-20260207-001/MS002")
 
+    def test_next_milestone_sequence_counts_malformed_active_ms_filenames(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            execplans_dir = root / ".agent" / "exec_plans"
+            created_plan = create_execplan(
+                root=root,
+                title="Malformed Sequence Guard",
+                slug="malformed-sequence-guard",
+                date_yyyymmdd="20260207",
+                execplans_dir=execplans_dir,
+                update_registry=False,
+            )
+
+            malformed = created_plan.plan_path.parent / "milestones" / "active" / "MS007_malformed.md"
+            malformed.parent.mkdir(parents=True, exist_ok=True)
+            malformed.write_text("# missing front matter\n", encoding="utf-8")
+
+            next_sequence = milestone_module._next_milestone_sequence(
+                plan_root=created_plan.plan_path.parent,
+                execplan_id=created_plan.plan_id,
+            )
+            self.assertEqual(next_sequence, 8)
+
     def test_create_milestone_rejects_duplicate_parent_execplan_ids(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
@@ -197,6 +221,106 @@ class ExecPlanMilestonesTests(unittest.TestCase):
                     root=root,
                     execplan_id="EP-20260207-001",
                     title="Cannot resolve parent",
+                    execplans_dir=execplans_dir,
+                )
+
+    def test_create_milestone_uses_legacy_filename_prefix_in_shared_active_root(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            execplans_dir = root / ".agent" / "exec_plans"
+
+            _write_execplan(
+                execplans_dir / "active" / "EP-20260207-001_active.md",
+                plan_id="EP-20260207-001",
+                title="Legacy Active Root A",
+            )
+            _write_execplan(
+                execplans_dir / "active" / "EP-20260207-002_active.md",
+                plan_id="EP-20260207-002",
+                title="Legacy Active Root B",
+            )
+
+            first = create_execplan_milestone(
+                root=root,
+                execplan_id="EP-20260207-001",
+                title="Kickoff",
+                execplans_dir=execplans_dir,
+            )
+            second = create_execplan_milestone(
+                root=root,
+                execplan_id="EP-20260207-002",
+                title="Kickoff",
+                execplans_dir=execplans_dir,
+            )
+
+            self.assertEqual(first.milestone_id, "EP-20260207-001/MS001")
+            self.assertEqual(second.milestone_id, "EP-20260207-002/MS001")
+            self.assertEqual(first.milestone_path.name, "EP-20260207-001_MS001_kickoff.md")
+            self.assertEqual(second.milestone_path.name, "EP-20260207-002_MS001_kickoff.md")
+            self.assertTrue(first.milestone_path.exists())
+            self.assertTrue(second.milestone_path.exists())
+
+    def test_create_milestone_rejects_invalid_active_ms_metadata(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            execplans_dir = root / ".agent" / "exec_plans"
+            created_plan = create_execplan(
+                root=root,
+                title="Invalid Active Metadata",
+                slug="invalid-active-metadata",
+                date_yyyymmdd="20260207",
+                execplans_dir=execplans_dir,
+                update_registry=False,
+            )
+
+            malformed = created_plan.plan_path.parent / "milestones" / "active" / "MS001_broken.md"
+            malformed.parent.mkdir(parents=True, exist_ok=True)
+            malformed.write_text(
+                (
+                    "---\n"
+                    "title: Broken Milestone\n"
+                    "---\n\n"
+                    "# Broken\n"
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "active milestone metadata is invalid") as error_context:
+                create_execplan_milestone(
+                    root=root,
+                    execplan_id=created_plan.plan_id,
+                    title="Should fail",
+                    execplans_dir=execplans_dir,
+                )
+
+            self.assertIn("MS001_broken.md", str(error_context.exception))
+
+    def test_create_milestone_rejects_archived_execplan(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            execplans_dir = root / ".agent" / "exec_plans"
+            created_plan = create_execplan(
+                root=root,
+                title="Archive Locked Plan",
+                slug="archive-locked-plan",
+                date_yyyymmdd="20260207",
+                execplans_dir=execplans_dir,
+                update_registry=False,
+            )
+
+            archive_execplan(
+                root=root,
+                execplan_id=created_plan.plan_id,
+                execplans_dir=execplans_dir,
+                archive_date_yyyymmdd="20260212",
+                update_registry=False,
+            )
+
+            with self.assertRaisesRegex(ValueError, "cannot accept new milestones"):
+                create_execplan_milestone(
+                    root=root,
+                    execplan_id=created_plan.plan_id,
+                    title="Should be rejected",
                     execplans_dir=execplans_dir,
                 )
 

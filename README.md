@@ -127,7 +127,8 @@ agentrules keys
 - `agentrules` – interactive main menu (analyze, configure models/outputs, check keys).
 - `agentrules analyze /path/to/project` – full six-phase analysis.
 - `agentrules analyze /path/to/project --rules-filename CLAUDE.md` – one-run override for output rules filename.
-- `agentrules execplan new \"Title\"` – create a new ExecPlan markdown file under `.agent/exec_plans/<slug>/`.
+- `agentrules execplan new \"Title\"` – create a new ExecPlan markdown file under `.agent/exec_plans/active/<slug>/`.
+- `agentrules execplan archive EP-YYYYMMDD-NNN [--date YYYYMMDD]` – archive a full ExecPlan directory under `.agent/exec_plans/archive/YYYY/MM/DD/EP-YYYYMMDD-NNN_<slug>/`.
 - `agentrules execplan milestone new EP-YYYYMMDD-NNN \"Title\"` – create a milestone under a specific ExecPlan.
 - `agentrules execplan milestone list EP-YYYYMMDD-NNN [--active-only]` – list milestones for one ExecPlan.
 - `agentrules execplan milestone archive EP-YYYYMMDD-NNN --ms <N>` – archive an active milestone sequence.
@@ -143,8 +144,10 @@ ExecPlans and milestones use canonical IDs and deterministic file locations:
 
 - ExecPlan ID: `EP-YYYYMMDD-NNN`
 - Milestone ID: `EP-YYYYMMDD-NNN/MS###`
-- Active milestone path: `.agent/exec_plans/<plan-slug>/milestones/active/EP-YYYYMMDD-NNN_MS###_<milestone-slug>.md`
-- Archive milestone path: `.agent/exec_plans/<plan-slug>/milestones/archive/EP-YYYYMMDD-NNN_MS###_<milestone-slug>.md`
+- Active ExecPlan path: `.agent/exec_plans/active/<plan-slug>/EP-YYYYMMDD-NNN_<plan-slug>.md`
+- Archived ExecPlan path: `.agent/exec_plans/archive/YYYY/MM/DD/EP-YYYYMMDD-NNN_<plan-slug>/EP-YYYYMMDD-NNN_<plan-slug>.md`
+- Active milestone path: `.agent/exec_plans/active/<plan-slug>/milestones/active/MS###_<milestone-slug>.md`
+- Archive milestone path: `.agent/exec_plans/active/<plan-slug>/milestones/archive/MS###_<milestone-slug>.md`
 
 Milestone creation is parent-first and sequence-safe:
 
@@ -170,6 +173,9 @@ agentrules execplan milestone list EP-20260207-001 --active-only
 
 # 4) Archive a completed milestone
 agentrules execplan milestone archive EP-20260207-001 --ms 1
+
+# 5) Archive the completed ExecPlan directory
+agentrules execplan archive EP-20260207-001 --date 20260212
 ```
 
 ## ⚙️ Configuration & Preferences
