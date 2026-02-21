@@ -13,6 +13,7 @@ from agentrules.core.execplan.registry import (
     RegistryBuildResult,
     build_execplan_registry,
     collect_execplan_registry,
+    summarize_registry_activity,
 )
 
 from ..bootstrap import bootstrap_runtime
@@ -37,6 +38,18 @@ def _exit_code_for_result(result: RegistryBuildResult, *, fail_on_warn: bool) ->
     if fail_on_warn and result.warning_count > 0:
         return 1
     return 0
+
+
+def _format_activity_summary(*, result: RegistryBuildResult, root: Path, execplans_dir: Path) -> str:
+    summary = summarize_registry_activity(
+        registry=result.registry,
+        root=root,
+        execplans_dir=execplans_dir,
+    )
+    return (
+        f"{summary.active_execplans} active plans, "
+        f"milestones {summary.active_milestones}/{summary.total_milestones} active"
+    )
 
 
 def _run_check(
@@ -181,9 +194,14 @@ def register(app: typer.Typer) -> None:
 
         _print_issues(result, console=console)
         if exit_code == 0 and result.wrote_registry and result.output_path is not None:
+            summary_text = _format_activity_summary(
+                result=result,
+                root=resolved_root,
+                execplans_dir=resolved_execplans_dir,
+            )
             console.print(
                 f"[green]Wrote registry:[/] {result.output_path.as_posix()} "
-                f"({len(result.registry.get('plans', []))} plans)"
+                f"({summary_text})"
             )
         else:
             console.print(
@@ -229,9 +247,14 @@ def register(app: typer.Typer) -> None:
 
         _print_issues(result, console=console)
         if exit_code == 0 and result.wrote_registry and result.output_path is not None:
+            summary_text = _format_activity_summary(
+                result=result,
+                root=resolved_root,
+                execplans_dir=resolved_execplans_dir,
+            )
             console.print(
                 f"[green]Updated registry:[/] {result.output_path.as_posix()} "
-                f"({len(result.registry.get('plans', []))} plans)"
+                f"({summary_text})"
             )
         else:
             console.print(

@@ -94,8 +94,8 @@ class ExecPlanMilestoneCLITests(unittest.TestCase):
         self.assertEqual(create_milestone.exit_code, 0, msg=create_milestone.output)
 
         active_glob = list(
-            (self.root / ".agent" / "exec_plans" / "billing-foundation" / "milestones" / "active").glob(
-                "EP-20260207-001_MS001*.md"
+            (self.root / ".agent" / "exec_plans" / "active" / "billing-foundation" / "milestones" / "active").glob(
+                "MS001*.md"
             )
         )
         self.assertEqual(len(active_glob), 1)
@@ -118,8 +118,16 @@ class ExecPlanMilestoneCLITests(unittest.TestCase):
 
         self.assertFalse(active_glob[0].exists())
         archived_glob = list(
-            (self.root / ".agent" / "exec_plans" / "billing-foundation" / "milestones" / "archive").rglob(
-                "EP-20260207-001_MS001*.md"
+            (
+                self.root
+                / ".agent"
+                / "exec_plans"
+                / "active"
+                / "billing-foundation"
+                / "milestones"
+                / "archive"
+            ).rglob(
+                "MS001*.md"
             )
         )
         self.assertEqual(len(archived_glob), 1)
@@ -139,6 +147,98 @@ class ExecPlanMilestoneCLITests(unittest.TestCase):
         )
         self.assertEqual(list_active_only.exit_code, 0, msg=list_active_only.output)
         self.assertIn("No milestones found", list_active_only.output)
+
+    def test_milestone_remaining_lists_active_only_in_compact_mode(self) -> None:
+        from agentrules import cli
+
+        create_plan = self.runner.invoke(
+            cli.app,
+            [
+                "execplan",
+                "new",
+                "Milestone Remaining",
+                "--root",
+                str(self.root),
+                "--date",
+                "20260207",
+                "--no-update-registry",
+            ],
+        )
+        self.assertEqual(create_plan.exit_code, 0, msg=create_plan.output)
+
+        create_first = self.runner.invoke(
+            cli.app,
+            [
+                "execplan",
+                "milestone",
+                "new",
+                "EP-20260207-001",
+                "First",
+                "--root",
+                str(self.root),
+            ],
+        )
+        self.assertEqual(create_first.exit_code, 0, msg=create_first.output)
+
+        create_second = self.runner.invoke(
+            cli.app,
+            [
+                "execplan",
+                "milestone",
+                "new",
+                "EP-20260207-001",
+                "Second",
+                "--root",
+                str(self.root),
+            ],
+        )
+        self.assertEqual(create_second.exit_code, 0, msg=create_second.output)
+
+        archive_first = self.runner.invoke(
+            cli.app,
+            [
+                "execplan",
+                "milestone",
+                "archive",
+                "EP-20260207-001",
+                "--ms",
+                "1",
+                "--root",
+                str(self.root),
+            ],
+        )
+        self.assertEqual(archive_first.exit_code, 0, msg=archive_first.output)
+
+        remaining = self.runner.invoke(
+            cli.app,
+            [
+                "execplan",
+                "milestone",
+                "remaining",
+                "EP-20260207-001",
+                "--root",
+                str(self.root),
+            ],
+        )
+        self.assertEqual(remaining.exit_code, 0, msg=remaining.output)
+        self.assertIn("Remaining milestones for EP-20260207-001: 1", remaining.output)
+        self.assertIn("EP-20260207-001/MS002", remaining.output)
+        self.assertNotIn("EP-20260207-001/MS001", remaining.output)
+
+        remaining_with_path = self.runner.invoke(
+            cli.app,
+            [
+                "execplan",
+                "milestone",
+                "remaining",
+                "EP-20260207-001",
+                "--root",
+                str(self.root),
+                "--path",
+            ],
+        )
+        self.assertEqual(remaining_with_path.exit_code, 0, msg=remaining_with_path.output)
+        self.assertIn("->", remaining_with_path.output)
 
 
 if __name__ == "__main__":

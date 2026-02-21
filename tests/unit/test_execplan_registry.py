@@ -7,17 +7,26 @@ from pathlib import Path
 from agentrules.core.execplan.registry import (
     build_execplan_registry,
     collect_execplan_registry,
+    list_active_execplan_summaries,
+    summarize_registry_activity,
 )
 
 
-def _write_execplan(path: Path, *, plan_id: str, title: str, depends_on: str = "[]") -> None:
+def _write_execplan(
+    path: Path,
+    *,
+    plan_id: str,
+    title: str,
+    depends_on: str = "[]",
+    status: str = "planned",
+) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
         (
             "---\n"
             f"id: {plan_id}\n"
             f'title: "{title}"\n'
-            "status: planned\n"
+            f"status: {status}\n"
             "kind: feature\n"
             "domain: backend\n"
             'owner: "@codex"\n'
@@ -85,7 +94,207 @@ def _write_execplan_block_lists(
     )
 
 
+def _write_milestone(path: Path, *, milestone_id: str, execplan_id: str, title: str = "Milestone") -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        (
+            "---\n"
+            f"id: {milestone_id}\n"
+            f"execplan_id: {execplan_id}\n"
+            f'title: "{title}"\n'
+            "status: planned\n"
+            'owner: "@codex"\n'
+            "domain: backend\n"
+            "created: 2026-02-07\n"
+            "updated: 2026-02-07\n"
+            "---\n\n"
+            "# Milestone\n"
+        ),
+        encoding="utf-8",
+    )
+
+
 class ExecPlanRegistryTests(unittest.TestCase):
+    def test_list_active_execplan_summaries_returns_per_plan_progress(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            execplans_dir = root / ".agent" / "exec_plans"
+
+            _write_execplan(
+                execplans_dir / "active" / "checkout" / "EP-20260207-001_checkout.md",
+                plan_id="EP-20260207-001",
+                title="Checkout",
+                status="active",
+            )
+            _write_execplan(
+                execplans_dir / "active" / "search" / "EP-20260207-002_search.md",
+                plan_id="EP-20260207-002",
+                title="Search",
+                status="planned",
+            )
+            _write_execplan(
+                execplans_dir
+                / "archive"
+                / "2026"
+                / "02"
+                / "12"
+                / "EP-20260207-003_legacy-cleanup"
+                / "EP-20260207-003_legacy-cleanup.md",
+                plan_id="EP-20260207-003",
+                title="Legacy Cleanup",
+                status="done",
+            )
+
+            _write_milestone(
+                execplans_dir
+                / "active"
+                / "checkout"
+                / "milestones"
+                / "active"
+                / "MS001_wire-checkout-api.md",
+                milestone_id="EP-20260207-001/MS001",
+                execplan_id="EP-20260207-001",
+            )
+            _write_milestone(
+                execplans_dir
+                / "active"
+                / "checkout"
+                / "milestones"
+                / "archive"
+                / "MS002_add-coupon-validation.md",
+                milestone_id="EP-20260207-001/MS002",
+                execplan_id="EP-20260207-001",
+            )
+            _write_milestone(
+                execplans_dir
+                / "archive"
+                / "2026"
+                / "02"
+                / "12"
+                / "EP-20260207-003_legacy-cleanup"
+                / "milestones"
+                / "active"
+                / "MS001_deprecate-v1-endpoint.md",
+                milestone_id="EP-20260207-003/MS001",
+                execplan_id="EP-20260207-003",
+            )
+
+            collected = collect_execplan_registry(root=root, execplans_dir=execplans_dir)
+            summaries = list_active_execplan_summaries(
+                registry=collected.registry,
+                root=root,
+                execplans_dir=execplans_dir,
+            )
+
+            self.assertEqual([summary.id for summary in summaries], ["EP-20260207-001", "EP-20260207-002"])
+            self.assertEqual([summary.title for summary in summaries], ["Checkout", "Search"])
+            self.assertEqual(
+                [(summary.active_milestones, summary.total_milestones) for summary in summaries],
+                [(1, 2), (0, 0)],
+            )
+
+    def test_list_active_execplan_summaries_ignores_mismatched_milestone_id_prefix(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            execplans_dir = root / ".agent" / "exec_plans"
+
+            _write_execplan(
+                execplans_dir / "active" / "checkout" / "EP-20260207-001_checkout.md",
+                plan_id="EP-20260207-001",
+                title="Checkout",
+                status="active",
+            )
+            _write_milestone(
+                execplans_dir
+                / "active"
+                / "checkout"
+                / "milestones"
+                / "active"
+                / "MS001_mismatched-id-prefix.md",
+                milestone_id="EP-20260207-002/MS001",
+                execplan_id="EP-20260207-001",
+            )
+
+            collected = collect_execplan_registry(root=root, execplans_dir=execplans_dir)
+            summaries = list_active_execplan_summaries(
+                registry=collected.registry,
+                root=root,
+                execplans_dir=execplans_dir,
+            )
+
+            self.assertEqual(len(summaries), 1)
+            self.assertEqual(summaries[0].id, "EP-20260207-001")
+            self.assertEqual((summaries[0].active_milestones, summaries[0].total_milestones), (0, 0))
+
+    def test_summarize_counts_active_plans_and_active_over_total_milestones(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            execplans_dir = root / ".agent" / "exec_plans"
+
+            _write_execplan(
+                execplans_dir / "active" / "checkout" / "EP-20260207-001_checkout.md",
+                plan_id="EP-20260207-001",
+                title="Checkout",
+                status="active",
+            )
+            _write_execplan(
+                execplans_dir
+                / "archive"
+                / "2026"
+                / "02"
+                / "12"
+                / "EP-20260207-002_legacy-cleanup"
+                / "EP-20260207-002_legacy-cleanup.md",
+                plan_id="EP-20260207-002",
+                title="Legacy Cleanup",
+                status="done",
+            )
+
+            _write_milestone(
+                execplans_dir
+                / "active"
+                / "checkout"
+                / "milestones"
+                / "active"
+                / "MS001_wire-checkout-api.md",
+                milestone_id="EP-20260207-001/MS001",
+                execplan_id="EP-20260207-001",
+            )
+            _write_milestone(
+                execplans_dir
+                / "active"
+                / "checkout"
+                / "milestones"
+                / "archive"
+                / "MS002_add-coupon-validation.md",
+                milestone_id="EP-20260207-001/MS002",
+                execplan_id="EP-20260207-001",
+            )
+            _write_milestone(
+                execplans_dir
+                / "archive"
+                / "2026"
+                / "02"
+                / "12"
+                / "EP-20260207-002_legacy-cleanup"
+                / "milestones"
+                / "active"
+                / "MS001_deprecate-v1-endpoint.md",
+                milestone_id="EP-20260207-002/MS001",
+                execplan_id="EP-20260207-002",
+            )
+
+            collected = collect_execplan_registry(root=root, execplans_dir=execplans_dir)
+            summary = summarize_registry_activity(
+                registry=collected.registry,
+                root=root,
+                execplans_dir=execplans_dir,
+            )
+
+            self.assertEqual(summary.active_execplans, 1)
+            self.assertEqual(summary.active_milestones, 1)
+            self.assertEqual(summary.total_milestones, 2)
+
     def test_build_writes_sorted_registry_and_excludes_milestones(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
@@ -345,6 +554,110 @@ class ExecPlanRegistryTests(unittest.TestCase):
             )
             self.assertTrue(build.wrote_registry)
             self.assertEqual(build.warning_count, 0)
+
+    def test_collect_does_not_treat_active_root_archive_slug_as_archived_path(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            execplans_dir = root / ".agent" / "exec_plans"
+            registry_path = execplans_dir / "registry.json"
+
+            _write_execplan(
+                execplans_dir / "active" / "archive" / "EP-20260207-001_archive.md",
+                plan_id="EP-20260207-001",
+                title="Archive Slug Plan Under Active Root",
+            )
+
+            result = collect_execplan_registry(root=root, execplans_dir=execplans_dir)
+            warning_messages = [issue.message for issue in result.issues if issue.severity == "warning"]
+            self.assertFalse(any("under archive path" in message for message in warning_messages))
+
+            build = build_execplan_registry(
+                root=root,
+                execplans_dir=execplans_dir,
+                output_path=registry_path,
+                fail_on_warn=True,
+            )
+            self.assertTrue(build.wrote_registry)
+            self.assertEqual(build.warning_count, 0)
+
+    def test_collect_includes_legacy_archived_plan_under_milestones_slug(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            execplans_dir = root / ".agent" / "exec_plans"
+
+            _write_execplan(
+                execplans_dir / "milestones" / "archive" / "EP-20260207-001_milestones.md",
+                plan_id="EP-20260207-001",
+                title="Milestones Slug Legacy Archive",
+                status="archived",
+            )
+
+            result = collect_execplan_registry(root=root, execplans_dir=execplans_dir)
+            self.assertEqual(result.error_count, 0)
+            self.assertEqual(len(result.registry["plans"]), 1)
+            self.assertEqual(result.registry["plans"][0]["id"], "EP-20260207-001")
+            self.assertEqual(result.registry["plans"][0]["status"], "archived")
+
+    def test_collect_allows_done_status_under_archive_path_without_warning(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            execplans_dir = root / ".agent" / "exec_plans"
+            registry_path = execplans_dir / "registry.json"
+
+            _write_execplan(
+                execplans_dir / "archive" / "2026" / "02" / "14" / "EP-20260214-003_agent-home-workspace" / "EP-20260214-003_agent-home-workspace.md",
+                plan_id="EP-20260214-003",
+                title="Agent Home Workspace",
+                status="done",
+            )
+
+            result = collect_execplan_registry(root=root, execplans_dir=execplans_dir)
+            warning_messages = [issue.message for issue in result.issues if issue.severity == "warning"]
+            self.assertFalse(any("under archive path" in message for message in warning_messages))
+            self.assertEqual(result.error_count, 0)
+
+            build = build_execplan_registry(
+                root=root,
+                execplans_dir=execplans_dir,
+                output_path=registry_path,
+                fail_on_warn=True,
+            )
+            self.assertTrue(build.wrote_registry)
+            self.assertEqual(build.warning_count, 0)
+
+    def test_collect_warns_when_archive_path_plan_is_not_done_or_archived(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            execplans_dir = root / ".agent" / "exec_plans"
+            registry_path = execplans_dir / "registry.json"
+
+            _write_execplan(
+                execplans_dir
+                / "archive"
+                / "2026"
+                / "02"
+                / "14"
+                / "EP-20260214-004_agent-home-workspace"
+                / "EP-20260214-004_agent-home-workspace.md",
+                plan_id="EP-20260214-004",
+                title="Agent Home Workspace",
+                status="active",
+            )
+
+            result = collect_execplan_registry(root=root, execplans_dir=execplans_dir)
+            warning_messages = [issue.message for issue in result.issues if issue.severity == "warning"]
+            self.assertTrue(any("under archive path" in message for message in warning_messages))
+            self.assertEqual(result.error_count, 0)
+
+            build = build_execplan_registry(
+                root=root,
+                execplans_dir=execplans_dir,
+                output_path=registry_path,
+                fail_on_warn=True,
+            )
+            self.assertFalse(build.wrote_registry)
+            self.assertEqual(build.warning_count, 1)
+            self.assertFalse(registry_path.exists())
 
 
 if __name__ == "__main__":

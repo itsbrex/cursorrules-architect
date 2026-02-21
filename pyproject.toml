@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agentrules"
-version = "3.2.2"
+version = "3.2.3"
 description = "Interactive CLI for the CursorRules Architect multi-phase analysis pipeline."
 readme = "README.md"
 authors = [{name = "trevor-nichols"}]
@@ -41,6 +41,7 @@ dev = [
   "pytest",
   "pytest-asyncio",
   "pytest-mock",
+  "flask",
   "ruff>=0.6",
   "pyright>=1.1.380",
 ]

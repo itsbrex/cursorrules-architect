@@ -3,8 +3,8 @@
 **Instructions for Creating Milestone:**
 
 * Base your milestone on the template shown within the `<MILESTONE_TEMPLATE>` tag.
-* Create your milestone within `.agent/exec_plans/<short_slug>/milestones/active/`.
-* When your milestone is complete, archive it in `.agent/exec_plans/<short_slug>/milestones/archive/`.
+* Create your milestone within `.agent/exec_plans/active/<short_slug>/milestones/active/`.
+* When your milestone is complete, archive it in `.agent/exec_plans/active/<short_slug>/milestones/archive/`.
 * Prefer CLI milestone workflow over manual file creation:
   - Create: `agentrules execplan milestone new EP-YYYYMMDD-NNN "<Milestone Title>"`
   - List: `agentrules execplan milestone list EP-YYYYMMDD-NNN` (or `--active-only`)
@@ -31,15 +31,15 @@ Example: `EP-20260117-014/MS003`
 
 Use this exact filename format:
 
-- `.agent/exec_plans/<short_slug>/milestones/active/EP-YYYYMMDD-NNN_MS###_<short-slug>.md`
+- `.agent/exec_plans/active/<short_slug>/milestones/active/MS###_<short-slug>.md`
 
 Example:
 
-- `.agent/exec_plans/<short_slug>/milestones/active/EP-20260117-014_MS003_prototype-streaming.md`
+- `.agent/exec_plans/active/<short_slug>/milestones/active/MS003_prototype-streaming.md`
 
 When complete, archive to:
 
-- `.agent/exec_plans/<short_slug>/milestones/archive/YYYY/MM/DD/EP-YYYYMMDD-NNN_MS###_<short-slug>.md`
+- `.agent/exec_plans/active/<short_slug>/milestones/archive/MS###_<short-slug>.md`
 
 ### Required YAML front matter (machine-readable)
 

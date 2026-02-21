@@ -66,7 +66,7 @@ The pipeline captures metrics (elapsed time, agent counts) and hands them to the
   - xAI (`grok-4` family)
   - Tavily (optional, enables live web search tooling)
 - Core dependencies: `anthropic`, `openai`, `google-genai>=1.51.0`, `tavily-python`, `tiktoken`, `rich`, `typer`, `questionary`, `platformdirs`, `pathspec`, `python-dotenv`, `protobuf`.
-- Dev tooling: `pytest`, `pytest-asyncio`, `pytest-mock`, `ruff`, `pyright`.
+- Dev tooling: `pytest`, `pytest-asyncio`, `pytest-mock`, `flask`, `ruff`, `pyright`.
 
 ## 📦 Installation
 
@@ -127,11 +127,15 @@ agentrules keys
 - `agentrules` – interactive main menu (analyze, configure models/outputs, check keys).
 - `agentrules analyze /path/to/project` – full six-phase analysis.
 - `agentrules analyze /path/to/project --rules-filename CLAUDE.md` – one-run override for output rules filename.
-- `agentrules execplan new \"Title\"` – create a new ExecPlan markdown file under `.agent/exec_plans/<slug>/`.
+- `agentrules execplan new \"Title\"` – create a new ExecPlan markdown file under `.agent/exec_plans/active/<slug>/`.
+- `agentrules execplan archive EP-YYYYMMDD-NNN [--date YYYYMMDD]` – archive a full ExecPlan directory under `.agent/exec_plans/archive/YYYY/MM/DD/EP-YYYYMMDD-NNN_<slug>/`.
+- `agentrules execplan list [--path]` – list active ExecPlans with compact milestone progress (`completed/total`).
 - `agentrules execplan milestone new EP-YYYYMMDD-NNN \"Title\"` – create a milestone under a specific ExecPlan.
 - `agentrules execplan milestone list EP-YYYYMMDD-NNN [--active-only]` – list milestones for one ExecPlan.
 - `agentrules execplan milestone archive EP-YYYYMMDD-NNN --ms <N>` – archive an active milestone sequence.
+- `agentrules execplan milestone remaining EP-YYYYMMDD-NNN [--path]` – show active milestones left for one ExecPlan.
 - `agentrules execplan-registry [build|check|update]` – manage `.agent/exec_plans/registry.json` from ExecPlan front matter.
+- `agentrules scaffold sync [--check|--force]` – sync `.agent/PLANS.md` and `.agent/templates/MILESTONE_TEMPLATE.md` with packaged defaults.
 - `agentrules configure --models` – assign presets per phase with guided prompts; the Phase 1 → Researcher entry lets you toggle the agent On/Off once a Tavily key is configured.
 - `agentrules configure --outputs` – toggle `.cursorignore`, `.agent/` scaffold generation, `phases_output/`, and custom rules filename.
 - `agentrules configure --logging` – set verbosity (`quiet`, `standard`, `verbose`) or export via `AGENTRULES_LOG_LEVEL`.
@@ -142,8 +146,10 @@ ExecPlans and milestones use canonical IDs and deterministic file locations:
 
 - ExecPlan ID: `EP-YYYYMMDD-NNN`
 - Milestone ID: `EP-YYYYMMDD-NNN/MS###`
-- Active milestone path: `.agent/exec_plans/<plan-slug>/milestones/active/EP-YYYYMMDD-NNN_MS###_<milestone-slug>.md`
-- Archive milestone path: `.agent/exec_plans/<plan-slug>/milestones/archive/YYYY/MM/DD/EP-YYYYMMDD-NNN_MS###_<milestone-slug>.md`
+- Active ExecPlan path: `.agent/exec_plans/active/<plan-slug>/EP-YYYYMMDD-NNN_<plan-slug>.md`
+- Archived ExecPlan path: `.agent/exec_plans/archive/YYYY/MM/DD/EP-YYYYMMDD-NNN_<plan-slug>/EP-YYYYMMDD-NNN_<plan-slug>.md`
+- Active milestone path: `.agent/exec_plans/active/<plan-slug>/milestones/active/MS###_<milestone-slug>.md`
+- Archive milestone path: `.agent/exec_plans/active/<plan-slug>/milestones/archive/MS###_<milestone-slug>.md`
 
 Milestone creation is parent-first and sequence-safe:
 
@@ -167,8 +173,17 @@ agentrules execplan milestone new EP-20260207-001 "Implement callback flow"
 agentrules execplan milestone list EP-20260207-001
 agentrules execplan milestone list EP-20260207-001 --active-only
 
+# Optional: compact "what's left" view for active milestones only
+agentrules execplan milestone remaining EP-20260207-001
+
 # 4) Archive a completed milestone
 agentrules execplan milestone archive EP-20260207-001 --ms 1
+
+# 5) Archive the completed ExecPlan directory
+agentrules execplan archive EP-20260207-001 --date 20260212
+
+# Optional: list all active plans with compact milestone progress
+agentrules execplan list
 ```
 
 ## ⚙️ Configuration & Preferences

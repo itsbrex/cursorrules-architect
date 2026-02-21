@@ -10,6 +10,7 @@ from .commands.configure import register as register_configure
 from .commands.execplan import register as register_execplan
 from .commands.execplan_registry import register as register_execplan_registry
 from .commands.keys import register as register_keys
+from .commands.scaffold import register as register_scaffold
 from .commands.tree import register as register_tree
 from .ui.main_menu import run_main_menu
 
@@ -29,6 +30,7 @@ def build_app() -> typer.Typer:
     register_execplan(app)
     register_execplan_registry(app)
     register_keys(app)
+    register_scaffold(app)
     register_tree(app)
 
     @app.callback(invoke_without_command=True)

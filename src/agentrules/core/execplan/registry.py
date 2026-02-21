@@ -14,10 +14,18 @@ from typing import Any, Literal
 import yaml
 
 from agentrules.core.execplan.identity import extract_execplan_id_from_filename
-from agentrules.core.execplan.paths import is_execplan_archive_path, is_execplan_milestone_path
+from agentrules.core.execplan.paths import (
+    ACTIVE_DIR,
+    ARCHIVE_DIR,
+    MILESTONES_DIR,
+    get_execplan_plan_root,
+    is_execplan_archive_path,
+    is_execplan_milestone_path,
+)
 
 FRONT_MATTER_RE = re.compile(r"\A\s*---\s*\n(.*?)\n---\s*(?:\n|$)", re.DOTALL)
 EXECPLAN_ID_RE = re.compile(r"^EP-\d{8}-\d{3}$")
+MILESTONE_ID_RE = re.compile(r"^(?P<execplan_id>EP-\d{8}-\d{3})/MS\d{3}$")
 
 REQUIRED_KEYS = frozenset(
     {
@@ -34,8 +42,10 @@ REQUIRED_KEYS = frozenset(
 
 ALLOWED_STATUSES = frozenset({"planned", "active", "paused", "done", "archived"})
 ALLOWED_KINDS = frozenset({"feature", "refactor", "bugfix", "migration", "infra", "spike", "perf", "docs", "tests"})
-ALLOWED_DOMAINS = frozenset({"backend", "frontend", "console", "infra", "cross-cutting"})
-ALLOWED_TOUCHES = frozenset({"api", "db", "ui", "cli", "agents", "ops", "security", "tests", "docs"})
+ALLOWED_DOMAINS = frozenset({"backend", "frontend", "console", "infra", "cross-cutting", "fullstack"})
+ALLOWED_TOUCHES = frozenset(
+    {"api", "db", "ui", "cli", "agents", "ops", "security", "tests", "docs", "backend", "frontend"}
+)
 ALLOWED_RISK = frozenset({"low", "med", "high"})
 
 DEFAULT_EXECPLANS_DIR = Path(".agent/exec_plans")
@@ -109,6 +119,23 @@ class RegistryBuildResult:
     @property
     def warning_count(self) -> int:
         return sum(1 for issue in self.issues if issue.severity == "warning")
+
+
+@dataclass(frozen=True, slots=True)
+class RegistryActivitySummary:
+    active_execplans: int
+    active_milestones: int
+    total_milestones: int
+
+
+@dataclass(frozen=True, slots=True)
+class ActiveExecPlanSummary:
+    id: str
+    title: str
+    status: str
+    path: str
+    active_milestones: int
+    total_milestones: int
 
 
 def _iso_utc_now() -> str:
@@ -391,11 +418,11 @@ def _build_plan(
                 path=path_text,
             )
         )
-    if status != "archived" and in_archive:
+    if in_archive and status not in {"archived", "done"}:
         issues.append(
             RegistryIssue(
                 "warning",
-                "Plan file is under archive path but status is not 'archived'.",
+                "Plan file is under archive path but status is neither 'archived' nor 'done'.",
                 path=path_text,
             )
         )
@@ -514,6 +541,139 @@ def collect_execplan_registry(
     return RegistryBuildResult(
         registry=registry,
         issues=tuple(issues),
+    )
+
+
+def _resolve_registry_plan_path(path_value: str, *, root: Path) -> Path:
+    candidate = Path(path_value)
+    return candidate.resolve() if candidate.is_absolute() else (root / candidate).resolve()
+
+
+def _is_owned_milestone_file(path: Path, *, execplan_id: str) -> bool:
+    filename_execplan_id = extract_execplan_id_from_filename(path.name)
+    if filename_execplan_id is not None and filename_execplan_id != execplan_id:
+        return False
+
+    try:
+        metadata = _extract_front_matter(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, ValueError):
+        return False
+
+    milestone_execplan_id = str(metadata.get("execplan_id", "")).strip()
+    if milestone_execplan_id != execplan_id:
+        return False
+
+    milestone_id = str(metadata.get("id", "")).strip()
+    milestone_match = MILESTONE_ID_RE.fullmatch(milestone_id)
+    if milestone_match is None:
+        return False
+    return milestone_match.group("execplan_id") == execplan_id
+
+
+def _count_milestones_for_plan(*, plan_path: Path, execplan_id: str, execplans_dir: Path) -> tuple[int, int]:
+    try:
+        plan_root = get_execplan_plan_root(plan_path, execplans_root=execplans_dir)
+    except ValueError:
+        return 0, 0
+
+    milestones_root = (plan_root / MILESTONES_DIR).resolve()
+    if not milestones_root.exists():
+        return 0, 0
+
+    active_root = (milestones_root / ACTIVE_DIR).resolve()
+    archive_root = (milestones_root / ARCHIVE_DIR).resolve()
+
+    active_count = 0
+    total_count = 0
+    for root in (active_root, archive_root):
+        if not root.exists():
+            continue
+        is_active_root = root == active_root
+        for candidate in root.rglob("*.md"):
+            if not candidate.is_file():
+                continue
+            if not _is_owned_milestone_file(candidate.resolve(), execplan_id=execplan_id):
+                continue
+            total_count += 1
+            if is_active_root:
+                active_count += 1
+    return active_count, total_count
+
+
+def list_active_execplan_summaries(
+    *,
+    registry: dict[str, Any],
+    root: Path,
+    execplans_dir: Path = DEFAULT_EXECPLANS_DIR,
+) -> tuple[ActiveExecPlanSummary, ...]:
+    """
+    Return active ExecPlans with per-plan milestone progress.
+
+    Active plans are plans whose files are not under an archive path. Milestone
+    counts include owned files in milestones/active and milestones/archive.
+    """
+    resolved_root = root.resolve()
+    resolved_execplans_dir = _resolve_path(resolved_root, execplans_dir)
+
+    plans = registry.get("plans", [])
+    if not isinstance(plans, list):
+        return ()
+
+    summaries: list[ActiveExecPlanSummary] = []
+    for plan in plans:
+        if not isinstance(plan, dict):
+            continue
+        plan_id = str(plan.get("id", "")).strip()
+        plan_path_value = str(plan.get("path", "")).strip()
+        if EXECPLAN_ID_RE.fullmatch(plan_id) is None or not plan_path_value:
+            continue
+
+        plan_path = _resolve_registry_plan_path(plan_path_value, root=resolved_root)
+        if is_execplan_archive_path(plan_path, execplans_root=resolved_execplans_dir):
+            continue
+
+        active_milestones, total_milestones = _count_milestones_for_plan(
+            plan_path=plan_path,
+            execplan_id=plan_id,
+            execplans_dir=resolved_execplans_dir,
+        )
+        summaries.append(
+            ActiveExecPlanSummary(
+                id=plan_id,
+                title=str(plan.get("title", "")).strip(),
+                status=str(plan.get("status", "")).strip(),
+                path=plan_path_value,
+                active_milestones=active_milestones,
+                total_milestones=total_milestones,
+            )
+        )
+
+    summaries.sort(key=lambda item: item.id)
+    return tuple(summaries)
+
+
+def summarize_registry_activity(
+    *,
+    registry: dict[str, Any],
+    root: Path,
+    execplans_dir: Path = DEFAULT_EXECPLANS_DIR,
+) -> RegistryActivitySummary:
+    """
+    Summarize active ExecPlans and milestone progress for CLI reporting.
+
+    Active plans are plans whose files are not under an archive path. Milestone
+    totals are aggregated across active plans only and count owned milestone
+    files under milestones/active and milestones/archive.
+    """
+    summaries = list_active_execplan_summaries(
+        registry=registry,
+        root=root,
+        execplans_dir=execplans_dir,
+    )
+    return RegistryActivitySummary(
+        active_execplans=len(summaries),
+        active_milestones=sum(summary.active_milestones for summary in summaries),
+        total_milestones=sum(summary.total_milestones for summary in summaries),
     )
 
 

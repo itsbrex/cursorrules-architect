@@ -1,6 +1,11 @@
 """ExecPlan domain services and models."""
 
-from agentrules.core.execplan.creator import ExecPlanCreateResult, create_execplan
+from agentrules.core.execplan.creator import (
+    ExecPlanArchiveResult,
+    ExecPlanCreateResult,
+    archive_execplan,
+    create_execplan,
+)
 from agentrules.core.execplan.milestones import (
     MilestoneArchiveResult,
     MilestoneCreateResult,
@@ -24,6 +29,7 @@ from agentrules.core.execplan.registry import (
 __all__ = [
     "DEFAULT_EXECPLANS_DIR",
     "DEFAULT_REGISTRY_PATH",
+    "ExecPlanArchiveResult",
     "ExecPlanCreateResult",
     "MilestoneArchiveResult",
     "MilestoneCreateResult",
@@ -32,6 +38,7 @@ __all__ = [
     "RegistryIssue",
     "RegistryPlan",
     "archive_execplan_milestone",
+    "archive_execplan",
     "build_execplan_registry",
     "collect_execplan_registry",
     "create_execplan_milestone",
